@@ -21,7 +21,7 @@ def root2pandas(files_path, tree_name, **kwargs):
         	return pd.DataFrame(ss.data)
 
 def x(events, phrase):
-        return events[[key for key in events.keys() if phrase in key]]
+        return events[[key for key in events.keys() if key.startswith(phrase)]]
 
 def readin(ttbar_path, qcd_path, wjets_path):
 	#convert root files to pandas
@@ -58,4 +58,4 @@ def readin(ttbar_path, qcd_path, wjets_path):
 	return jet_branches, muon_branches, photon_branches, w_branch, y_branch
 
 #test
-readin('/home/ubuntu/jenny/ttbar.root', '/home/ubuntu/jenny/qcd.root','/home/ubuntu/jenny/ttbar.root')
+print readin('/home/ubuntu/jenny/ttbar.root', '/home/ubuntu/jenny/qcd.root','/home/ubuntu/jenny/ttbar.root')
