@@ -1,0 +1,12 @@
+To contribute to this project:
+* Fork this repository
+* Make commits of logical units
+* Provide useful and descriptive comments to your commits
+* Push changes to a development branch. Avoid working directly on the master branch.
+* Only push tested code
+* Send pull requests to merge to master
+* Discuss your changes with other collaborators
+* Provide your opinions and comments to other people's contributions
+* Submit issues to point out bugs, suggest restructuring, etc.
+
+Feel free to experiment on multiple branches. Not all of everyone's code will make it to master, but every single contribution will be considered and discussed among collaborators.
