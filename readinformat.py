@@ -18,7 +18,7 @@ def root2pandas(files_path, tree_name, **kwargs):
 		if you are working with .root files that contain different branches, you might have to mask your data
 		in that case, return pd.DataFrame(ss.data)
 	'''
-	files = glob.glob(files_path)
+	files = files_path
 	ss = stack_arrays([root2array(fpath, tree_name, **kwargs).view(np.recarray) for fpath in files])
 	try:
         	return pd.DataFrame(ss)
@@ -34,10 +34,10 @@ def build_X(events, phrase):
 	Returns:
 		output_array: a numpy array containing data only pertaining to the related branches
 	'''
-	return events[[key for key in events.keys() if key.startswith(phrase)]].as_matrix()
+	sliced_events = events[[key for key in events.keys() if key.startswith(phrase)]].as_matrix()
+	return sliced_events
 
-
-def read_in(ttbar_path, qcd_path, wjets_path):
+def read_in(class_files_dict):
 	'''takes paths of root files slices them into ML format
 	Args:
 		*_path:  a string like './data/*.root', for example
@@ -48,24 +48,21 @@ def read_in(ttbar_path, qcd_path, wjets_path):
 		y: ndarray containing the truth labels
 		w: ndarray containing EventWeights
 	'''
-	#convert root files to pandas
-	ttbar = root2pandas(ttbar_path, 'events')
-	qcd = root2pandas(qcd_path, 'events')
-	wjets = root2pandas(wjets_path, 'events')
 	
+	#convert files to pd data frames, assign key to y, concat all files
+	all_events=False	
+	for key in class_files_dict.keys():
+		df = root2pandas(class_files_dict[key], 'events')
+		df['y'] = key
+		if all_events is False:
+			all_events=df
+		else:
+			all_events = pd.concat([all_events, df], ignore_index=True)
 	
-	#create column indicating background(0)/signal(1)
-	ttbar['y'] = 1
-	qcd['y'] = 0
-	wjets['y'] = 0
-	
-	
-	#join the arrays together
-	all_events = pd.concat([ttbar, qcd, wjets], ignore_index=True)
-	
-	
+		
 	#slice related branches
 	X_jets = build_X(all_events, 'Jet')
+	print all_events.keys()
 	X_photons = build_X(all_events, 'Photon')
 	X_muons = build_X(all_events, 'Muon')
 	y = all_events['y'].values
