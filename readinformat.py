@@ -1,10 +1,3 @@
-'''Given files with data (in this example: ttbar, qcd, and wjets)
-   Concatenates all events
-   Creates Xjets, Xmuons, Xphotons, w, and y   
-
-'''
-
-
 import numpy as np
 from numpy.lib.recfunctions import stack_arrays
 from root_numpy import root2array
@@ -12,7 +5,19 @@ import pandas as pd
 import glob
 import argparse
 
+
 def root2pandas(files_path, tree_name, **kwargs):
+	'''converts files from .root to pandas DataFrame
+	Args:
+		files_path: a string like './data/*.root', for example
+		tree_name: a string like 'Collection_Tree' corresponding to the name of the folder inside the root file that we want to open
+		kwargs: arguments taken by root2array, such as branches to consider, start, stop, step, etc
+	Returns:
+		output_panda: a pandas dataframe like allbkg_df in which all the info from the root file will be stored
+	Note:
+		if you are working with .root files that contain different branches, you might have to mask your data
+		in that case, return pd.DataFrame(ss.data)
+	'''
 	files = glob.glob(files_path)
 	ss = stack_arrays([root2array(fpath, tree_name, **kwargs).view(np.recarray) for fpath in files])
 	try:
@@ -20,10 +25,29 @@ def root2pandas(files_path, tree_name, **kwargs):
     	except Exception:
         	return pd.DataFrame(ss.data)
 
-def x(events, phrase):
-        return events[[key for key in events.keys() if key.startswith(phrase)]]
 
-def readin(ttbar_path, qcd_path, wjets_path):
+def build_X(events, phrase):
+        '''slices related branches into a numpy array
+	Args:
+		events: a pandas DataFrame containing the complete data by event
+		phrase: a string like 'Jet' corresponding to the related branches wanted
+	Returns:
+		output_array: a numpy array containing data only pertaining to the related branches
+	'''
+	return events[[key for key in events.keys() if key.startswith(phrase)]].as_matrix()
+
+
+def read_in(ttbar_path, qcd_path, wjets_path):
+	'''takes paths of root files slices them into ML format
+	Args:
+		*_path:  a string like './data/*.root', for example
+	Returns:
+		X_jets: ndarray containing jet related branches
+		X_photons: ndarray containing photon related branches
+		X_muons: ndarray containing muon related branches
+		y: ndarray containing the truth labels
+		w: ndarray containing EventWeights
+	'''
 	#convert root files to pandas
 	ttbar = root2pandas(ttbar_path, 'events')
 	qcd = root2pandas(qcd_path, 'events')
@@ -41,21 +65,11 @@ def readin(ttbar_path, qcd_path, wjets_path):
 	
 	
 	#slice related branches
-	all_events_jets = x(all_events, 'Jet')
-	all_events_muons = x(all_events, 'Muon')
-	all_events_photons = x(all_events, 'Photon')
-	all_events_weights = all_events['EventWeight']
-	all_events_y = all_events['y']
+	X_jets = build_X(all_events, 'Jet')
+	X_photons = build_X(all_events, 'Photon')
+	X_muons = build_X(all_events, 'Muon')
+	y = all_events['y'].values
+	w = all_events['EventWeight'].values
 	
 	
-	#convert to np arrays
-	jet_branches = all_events_jets.as_matrix()
-	muon_branches = all_events_muons.as_matrix()
-	photon_branches = all_events_jets.as_matrix()
-	w_branch = all_events_weights.values
-	y_branch = all_events_y.values
-	
-	return jet_branches, muon_branches, photon_branches, w_branch, y_branch
-
-#test
-print readin('/home/ubuntu/jenny/ttbar.root', '/home/ubuntu/jenny/qcd.root','/home/ubuntu/jenny/ttbar.root')
+	return X_jets, X_photons, X_muons, y, w
