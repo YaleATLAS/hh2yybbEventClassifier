@@ -94,3 +94,38 @@ def read_in(class_files_dict):
     w = all_events['EventWeight'].values
     
     return X_jets, X_photons, X_muons, y, w
+
+    #shuffling events and spliting into testing and training sets, scaling X_jet, X_photon, and X_muon test sets based on training sets. This function takes in the read X_jet, X_photon, X_muon, Y and W arrays and returns the scaled test arrays of each variable.
+def scale_shuffle_split(X_jets, X_photons, X_muons, y, w):
+        '''
+    takes in X_jets, X_photons, X_Muons, y and w nd arrays, splits them into test and training sets, and scales X_jet, X_photon and X_muon test sets based on training sets , loads them and slices them into ML format
+    Args:
+        X_jets: ndarray [n_ev, n_jet_feat] containing jet related branches
+        X_photons: ndarray [n_ev, n_photon_feat] containing photon related branches
+        X_muons: ndarray [n_ev, n_muon_feat] containing muon related branches
+        y: ndarray [n_ev, 1] containing the truth labels
+        w: ndarray [n_ev, 1] containing EventWeights
+    Returns:
+        X_jets_train: ndarray [n_ev_train, n_jet_feat] containing the scaled shuffled events of jet related branches allocated for training
+        X_jets_test: ndarray [n_ev_test, n_jet_feat] containing the scaled shuffled events of jet related branches allocated for testing
+        X_photons_train: ndarray [n_ev_train, n_photon_feat] containing the scaled shuffled events of photon related branches allocated for training
+        X_photons_test: ndarray [n_ev_test, n_photon_feat] containing the scaled shuffled events of photon related branches allocated for testing
+        X_muons_train: ndarray [n_ev_train, n_muon_feat] containing the scaled shuffled events of muon related branches allocated for training
+        X_muons_test: ndarray [n_ev_test, n_muon_feat] containing the scaled shuffled events of muon related branches allocated for testing
+        Y_train: ndarray [n_ev_train, 1] containing the shuffled truth labels for training
+        Y_test: ndarray [n_ev_test, 1] containing the shuffled truth labels allocated for testing
+        W_train: ndarray [n_ev_train, 1] containing the shuffled EventWeights allocated for training
+        W_test: ndarray [n_ev_test, 1] containing the shuffled EventWeights allocated for testing
+    '''
+    
+    #shuffle events & split into testing and training sets
+    X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test=train_test_split(X1, X2, X3, y, w, test_size=0.4)
+    #fit a transformation to the training set of the X_Jet, X_Photon, and X_Muon data and thus apply a transformation to the train data and corresponding test data 
+    scaler=preprocessing.StandardScaler()
+    X_jets_train = scaler.fit_transform(X_jets_train)
+    X_jets_test = scaler.transform(X_jets_test)
+    X_photons_train = scaler.fit_transform(X_photons_train)
+    X_photons_test = scaler.transform(X_photons_test)       
+    X_muons_train = scaler.fit_transform(X_muons_train)
+    X_muons_test = scaler.transform(X_muons_test)
+    return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test
