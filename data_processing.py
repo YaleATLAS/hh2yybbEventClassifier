@@ -40,8 +40,9 @@ def build_X(events, phrase):
     Returns:
         output_array: a numpy array containing data only pertaining to the related branches
     '''
-    sliced_events = events[[key for key in events.keys() if key.startswith(phrase)]].as_matrix()
-    return sliced_events
+    branch_names = [key for key in events.keys() if key.startswith(phrase)]
+    sliced_events = events[varlist].as_matrix()
+    return sliced_events, branch_names
 
 def read_in(class_files_dict):
     '''
@@ -70,6 +71,9 @@ def read_in(class_files_dict):
         X_muons: ndarray [n_ev, n_muon_feat] containing muon related branches
         y: ndarray [n_ev, 1] containing the truth labels
         w: ndarray [n_ev, 1] containing EventWeights
+        jet_branches + photon_branches + muon_branches = list of strings that concatenates the individual 
+                lists of variables for each particle type, e.g.:
+                ['Jet_Px', 'Jet_E', 'Muon_ID', 'Photon_Px']
     '''
     
     #convert files to pd data frames, assign key to y, concat all files
@@ -83,9 +87,9 @@ def read_in(class_files_dict):
             all_events = pd.concat([all_events, df], ignore_index=True)
         
     #slice related branches
-    X_jets = build_X(all_events, 'Jet')
-    X_photons = build_X(all_events, 'Photon')
-    X_muons = build_X(all_events, 'Muon')
+    X_jets, jet_branches = build_X(all_events, 'Jet')
+    X_photons, photon_branches = build_X(all_events, 'Photon')
+    X_muons, muon_branches = build_X(all_events, 'Muon')
     
     #transform string labels to integer classes
     le = LabelEncoder()
@@ -93,4 +97,4 @@ def read_in(class_files_dict):
     
     w = all_events['EventWeight'].values
     
-    return X_jets, X_photons, X_muons, y, w
+    return X_jets, X_photons, X_muons, y, w, jet_branches + photon_branches + muon_branches
