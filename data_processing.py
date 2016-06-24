@@ -4,9 +4,10 @@ from root_numpy import root2array
 import pandas as pd
 import glob
 import argparse
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.cross_validation import train_test_split
 
-def root2pandas(file_paths, tree_name, **kwargs):
+def _root2pandas(file_paths, tree_name, **kwargs):
     '''converts files from .root to pandas DataFrame
     Args:
         file_paths: a string like './data/*.root', or
@@ -32,7 +33,7 @@ def root2pandas(file_paths, tree_name, **kwargs):
         return pd.DataFrame(ss.data)
 
 
-def build_X(events, phrase):
+def _build_X(events, phrase, exclude_vars):
     '''slices related branches into a numpy array
     Args:
         events: a pandas DataFrame containing the complete data by event
@@ -40,11 +41,11 @@ def build_X(events, phrase):
     Returns:
         output_array: a numpy array containing data only pertaining to the related branches
     '''
-    branch_names = [key for key in events.keys() if key.startswith(phrase)]
-    sliced_events = events[varlist].as_matrix()
+    branch_names = [key for key in events.keys() if (key.startswith(phrase) and (key not in exclude_vars))]
+    sliced_events = events[branch_names].as_matrix()
     return sliced_events, branch_names
 
-def read_in(class_files_dict):
+def read_in(class_files_dict, exclude_vars):
     '''
     takes in dict mapping class names to list of root files, loads them and slices them into ML format
     Args:
@@ -65,6 +66,7 @@ def read_in(class_files_dict):
                             ],
                             ...
                           } 
+        exclude_vars: list of strings of names of branches not to be used for training
     Returns:
         X_jets: ndarray [n_ev, n_jet_feat] containing jet related branches
         X_photons: ndarray [n_ev, n_photon_feat] containing photon related branches
@@ -79,7 +81,7 @@ def read_in(class_files_dict):
     #convert files to pd data frames, assign key to y, concat all files
     all_events = False  
     for key in class_files_dict.keys():
-        df = root2pandas(class_files_dict[key], 'events')
+        df = _root2pandas(class_files_dict[key], 'events')
         df['y'] = key
         if all_events is False:
             all_events = df
@@ -87,22 +89,23 @@ def read_in(class_files_dict):
             all_events = pd.concat([all_events, df], ignore_index=True)
         
     #slice related branches
-    X_jets, jet_branches = build_X(all_events, 'Jet')
-    X_photons, photon_branches = build_X(all_events, 'Photon')
-    X_muons, muon_branches = build_X(all_events, 'Muon')
+    X_jets, jet_branches = _build_X(all_events, 'Jet', exclude_vars)
+    X_photons, photon_branches = _build_X(all_events, 'Photon', exclude_vars)
+    X_muons, muon_branches = _build_X(all_events, 'Muon', exclude_vars)
     
     #transform string labels to integer classes
     le = LabelEncoder()
     y = le.fit_transform(all_events['y'].values)
     
     w = all_events['EventWeight'].values
+    print jet_branches + photon_branches + muon_branches
     
     return X_jets, X_photons, X_muons, y, w, jet_branches + photon_branches + muon_branches
 
-    #shuffling events and spliting into testing and training sets, scaling X_jet, X_photon, and X_muon test sets based on training sets. This function takes in the read X_jet, X_photon, X_muon, Y and W arrays and returns the scaled test arrays of each variable.
-def scale_shuffle_split(X_jets, X_photons, X_muons, y, w):
-        '''
-    takes in X_jets, X_photons, X_Muons, y and w nd arrays, splits them into test and training sets, and scales X_jet, X_photon and X_muon test sets based on training sets , loads them and slices them into ML format
+def shuffle_split_scale(X_jets, X_photons, X_muons, y, w):
+    '''
+    takes in X_jets, X_photons, X_Muons, y and w nd arrays, shuffles them, splits them into test (40%) and training (60%) sets, and scales X_jet, \
+    X_photon and X_muon test sets based on training sets
     Args:
         X_jets: ndarray [n_ev, n_jet_feat] containing jet related branches
         X_photons: ndarray [n_ev, n_photon_feat] containing photon related branches
@@ -123,13 +126,20 @@ def scale_shuffle_split(X_jets, X_photons, X_muons, y, w):
     '''
     
     #shuffle events & split into testing and training sets
-    X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test=train_test_split(X1, X2, X3, y, w, test_size=0.4)
-    #fit a transformation to the training set of the X_Jet, X_Photon, and X_Muon data and thus apply a transformation to the train data and corresponding test data 
-    scaler=preprocessing.StandardScaler()
-    X_jets_train = scaler.fit_transform(X_jets_train)
-    X_jets_test = scaler.transform(X_jets_test)
-    X_photons_train = scaler.fit_transform(X_photons_train)
-    X_photons_test = scaler.transform(X_photons_test)       
-    X_muons_train = scaler.fit_transform(X_muons_train)
-    X_muons_test = scaler.transform(X_muons_test)
+    X_jets_train, X_jets_test, \
+    X_photons_train, X_photons_test, \
+    X_muons_train, X_muons_test, \
+    Y_train, Y_test, \
+    W_train, W_test = train_test_split(X_jets, X_photons, X_muons, y, w, test_size=0.4)
+    # #fit a transformation to the training set of the X_Jet, X_Photon, and X_Muon data and
+    # #thus apply a transformation to the train data and corresponding test data 
+    # scaler = StandardScaler()
+    # print type(X_jets_train)
+    # print X_jets_train
+    # X_jets_train = scaler.fit_transform(X_jets_train)
+    # X_jets_test = scaler.transform(X_jets_test)
+    # X_photons_train = scaler.fit_transform(X_photons_train)
+    # X_photons_test = scaler.transform(X_photons_test)       
+    # X_muons_train = scaler.fit_transform(X_muons_train)
+    # X_muons_test = scaler.transform(X_muons_test)
     return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test
