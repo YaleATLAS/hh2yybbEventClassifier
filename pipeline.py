@@ -30,15 +30,14 @@ def main(json_config):
     class_files_dict = json.load(open(json_config))
 
     # -- transform ROOT files into standard ML format (ndarrays) 
-    X_jets, X_photons, X_muons, y, w = read_in(class_files_dict)
+    X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict)
     
     # -- shuffle, split samples into train and test set, scale features
     X_jets_train, X_jets_test, \
     X_photons_train, X_photons_test, \
     X_muons_train, X_muons_test, \
     y_train, y_test, \
-    w_train, w_test, \
-    variables = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+    w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
 
     # -- plot distributions:
     # this should produce weighted histograms of the input distributions for all variables
@@ -50,7 +49,7 @@ def main(json_config):
         X_muons_train, X_muons_test, 
         y_train, y_test, 
         w_train, w_test,
-        variables 
+        varlist 
         )
 
     # -- train
