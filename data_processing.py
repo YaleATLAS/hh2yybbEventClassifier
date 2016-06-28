@@ -105,16 +105,42 @@ def read_in(class_files_dict, exclude_vars):
     
     return X_jets, X_photons, X_muons, y, w, jet_branches + photon_branches + muon_branches
 
-def shuffle_split_scale(X_jets, X_photons, X_muons, y, w):
+def shuffle_split(X_jets, X_photons, X_muons, y, w):
     '''
-    takes in X_jets, X_photons, X_Muons, y and w nd arrays, shuffles them, splits them into test (40%) and training (60%) sets, and scales X_jet, \
-    X_photon and X_muon test sets based on training sets
+    takes in X_jets, X_photons, X_Muons, y and w nd arrays, shuffles them, splits them into test (40%) and training (60%) sets
     Args:
         X_jets: ndarray [n_ev, n_jet_feat] containing jet related branches
         X_photons: ndarray [n_ev, n_photon_feat] containing photon related branches
         X_muons: ndarray [n_ev, n_muon_feat] containing muon related branches
         y: ndarray [n_ev, 1] containing the truth labels
         w: ndarray [n_ev, 1] containing EventWeights
+    Returns:
+        X_jets_train: ndarray [n_ev_train, n_jet_feat] containing the events of jet related branches allocated for training
+        X_jets_test: ndarray [n_ev_test, n_jet_feat] containing the events of jet related branches allocated for testing
+        X_photons_train: ndarray [n_ev_train, n_photon_feat] containing the events of photon related branches allocated for training
+        X_photons_test: ndarray [n_ev_test, n_photon_feat] containing the events of photon related branches allocated for testing
+        X_muons_train: ndarray [n_ev_train, n_muon_feat] containing the events of muon related branches allocated for training
+        X_muons_test: ndarray [n_ev_test, n_muon_feat] containing the events of muon related branches allocated for testing
+        Y_train: ndarray [n_ev_train, 1] containing the shuffled truth labels for training
+        Y_test: ndarray [n_ev_test, 1] containing the shuffled truth labels allocated for testing
+        W_train: ndarray [n_ev_train, 1] containing the shuffled EventWeights allocated for training
+        W_test: ndarray [n_ev_test, 1] containing the shuffled EventWeights allocated for testing
+    '''
+    #shuffle events & split into testing and training sets
+    X_jets_train, X_jets_test, \
+    X_photons_train, X_photons_test, \
+    X_muons_train, X_muons_test, \
+    Y_train, Y_test, \
+    W_train, W_test = train_test_split(X_jets, X_photons, X_muons, y, w, test_size=0.4)
+
+    return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_train, Y_train, Y_test, W_train, W_test
+
+def scale (X_train, X_test):
+    '''
+    takes in test and training nd arrays and scales both based on the training set  
+    Args:
+        X_test: ndarray [n_ev, n__feat] containing events of branches allocated for training
+        X_train: ndarray [n_ev, n_feat] containing events of branches allocated for testing
     Returns:
         X_jets_train: ndarray [n_ev_train, n_jet_feat] containing the scaled shuffled events of jet related branches allocated for training
         X_jets_test: ndarray [n_ev_test, n_jet_feat] containing the scaled shuffled events of jet related branches allocated for testing
@@ -128,148 +154,17 @@ def shuffle_split_scale(X_jets, X_photons, X_muons, y, w):
         W_test: ndarray [n_ev_test, 1] containing the shuffled EventWeights allocated for testing
     '''
     
-    #shuffle events & split into testing and training sets
-    X_jets_train, X_jets_test, \
-    X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test, \
-    Y_train, Y_test, \
-    W_train, W_test = train_test_split(X_jets, X_photons, X_muons, y, w, test_size=0.4)
-    
     #define a set with ideal shape for later match-shape
-    X_jets_train_set=X_jets_train[:,0]
-    X_jets_test_set=X_jets_test[:,0]
-    X_photons_train_set=X_photons_train[:,0]
-    X_photons_test_set=X_photons_test[:,0]
-    X_muons_train_set=X_muons_train[:,0]
-    X_muons_test_set=X_muons_test[:,0]
+    X_train_set=X_train[:,0]
+    X_test_set=X_test[:,0]
 
-
-    #for i in range (X_jets_train.shape[1]):
-       # a=pup.flatten(X_jets_train[:,i]) 
-       # scaler = StandardScaler()
-      #  b = pup.match_shape(scaler.fit_transform(a), X_jets_train_set)
-        #c = scaler.fit_transform(a)
-        #d = a.shape
-        #print b
-  
-
-    #print "X_Jets_train {}".format(X_jets_train)
-
-    #flattens X_jets, X_photons, and X_muons test and training arrays, scales the arrays and then regives them their original shape based on the previously declared test set
-    for i in range (X_jets_train.shape[1]):
-        a=pup.flatten(X_jets_train[:,i])
-        c=pup.flatten(X_jets_test[:,i])
+    #flattens test and training arrays, scales the arrays and then regives them their original shape based on the previously declared sample set
+    for i in range (X_train.shape[1]):
+        a=pup.flatten(X_train[:,i])
+        c=pup.flatten(X_test[:,i])
         scaler = StandardScaler()
-        X_jets_train_final = pup.match_shape(scaler.fit_transform(a), X_jets_train_set)
-        X_jets_test_final = pup.match_shape(scaler.transform(c), X_jets_test_set)
+        X_train_final = pup.match_shape(scaler.fit_transform(a), X_train_set)
+        X_test_final = pup.match_shape(scaler.transform(c), X_test_set)
 
-    for i in range (X_photons_train.shape[1]):
-        a=pup.flatten(X_photons_train[:,i])
-        c=pup.flatten(X_photons_test[:,i])
-        scaler = StandardScaler()
-        X_photons_train_final = pup.match_shape(scaler.fit_transform(a), X_photons_train_set)
-        X_photons_test_final = pup.match_shape(scaler.transform(c), X_photons_test_set)
-
-    for i in range (X_muons_train.shape[1]):
-        a=pup.flatten(X_muons_train[:,i])
-        c=pup.flatten(X_muons_test[:,i])
-        scaler = StandardScaler()
-        X_muons_train_final = pup.match_shape(scaler.fit_transform(a), X_muons_train_set)
-        X_muons_test_final = pup.match_shape(scaler.transform(c), X_muons_test_set)
-
-
-        #X_jets_train[:,i]=pup.match_shape(scaler.fit_transform(flatten(X_jets_train[:,i])), X_jets_train_set)
-        #X_jets_test[:,i]=pup.match_shape(scaler.transform(flatten(X_jets_test[:,i])), X_jets_test_set)
-       # y=X_jets_train
-       # z=X_jets_train[:,i]
-       # a = pup.flatten(X_jets_train[:,i])
-        #b = scaler.fit_transform(a)
-        #c = pup.match_shape(b, X_jets_train_set)
-        #X_jets_train[:,i] = c
-        #print "Z is {}.".format(z) 
-   # print "y is {}",format(y)
-   # print "z is {}".format(z)
-   # print "a is {}".format(a) 
-    
-    """
-    for i in range (X_photons_test.shape[1]):
-        scaler = StandardScaler()
-        X_photons_train[:,i]=pup.match_shape(scaler.fit_transform(flatten(X_photons_train[:,i])), X_photons_train_set)
-        X_photons_test[:,i]=pup.match_shape(scaler.transform(flatten(X_photons_test[:,i])), X_photons_train_set)
-
-    for i in range (X_muons_train.shape[1]):
-        scaler = StandardScaler()
-        X_muons_train[:,i]=pup.match_shape(scaler.fit_transform(flatten(X_muons_train[:,i])), X_muons_train_set)
-        X_muons_test[:,i]=pup.match_shape(scaler.transform(flatten(X_muons_test[:,i])), X_muons_train_set)
-  
-    """
-
-
-   # print X_jets_test[:,0]
-
-    """X_jets_test_flat=[]
-    for i in range (X_jets_test.shape[1]):
-        X_jets_test_flat.append(flatten(X_jets_test[:,i]))
-
-    X_photons_train_flat=[]
-    for i in range (X_photons_train.shape[1]):
-        X_photons_train_flat.append(flatten(X_jets_train[:,i]))
-
-    X_photons_test_flat=[]
-    for i in range (X_photons_test.shape[1]):
-        X_photons_test_flat.append(flatten(X_photons_test[:,i]))
-
-    X_muons_train_flat=[]
-    for i in range (X_muons_train.shape[1]):
-        X_muons_train_flat.append(flatten(X_muons_train[:,i]))
-
-    X_muons_test_flat=[]
-    for i in range (X_muons_test.shape[1]):
-        X_muons_test_flat.append(flatten(X_muons_test[:,i]))
-"""
-
-    #X_jets_train=pd.DataFrame(X_jets_train)
-    #X_jets_test=pd.DataFrame(X_jets_test)
-    #X_photons_train=pd.DataFrame(X_photons_train)
-    #X_photons_test=pd.DataFrame(X_photons_test)
-    #X_muons_train=pd.DataFrame(X_muons_train)
-    #X_muons_test=pd.DataFrame(X_muons_test)
-    
-    #flatten each array by first turning it into a dataframe
-    #X_jets_train_flat={k: flatten(c) for k, c in X_jets_train.iterkv()}
-    #X_jets_test_flat={k: flatten(c) for k, c in X_jets_test.iterkv()}
-    #X_photons_train_flat={k: flatten(c) for k, c in X_photons_train.iterkv()}
-    #X_photons_test_flat={k: flatten(c) for k, c in X_photons_test.iterkv()}
-    #X_muons_train_flat={k: flatten(c) for k, c in X_muons_train.iterkv()}
-    #X_muons_test_flat={k: flatten(c) for k, c in X_muons_test.iterkv()}
-
-
-    #turn from dataframe back into array
-   # X_jets_train_flat=np.array(X_jets_train)
-   # X_jets_test_flat=np.array(X_jets_test)
-   # X_photons_train_flat=np.array(X_photons_train)
-   # X_photons_test_flat=nd.array(X_photons_test)
-  #  X_muons_train_flat=nd.array(X_muons_train)
-   # X_muons_test_flat=nd.array(X_muons_test)
-
-    #scale each flattened array
-    
-    #X_jets_train = scaler.fit_transform(X_jets_train)
-    #X_jets_test = scaler.transform(X_jets_test)
-    #X_photons_train = scaler.fit_transform(X_photons_train)
-    #X_photons_test = scaler.transform(X_photons_test)       
-    #X_muons_train = scaler.fit_transform(X_muons_train)
-    #X_muons_test = scaler.transform(X_muons_test)
-
-    #get scaled array with original shape
-    #X_jets_train_final=pup.match_shape(X_jets_train, X_jets_train_set)
-    #X_jets_test_final=pup.match_shape(X_jets_test, X_jets_test_set)
-    #X_photons_train_final=pup.match_shape(X_photons_train, X_photons_train_set)
-    #X_photons_test_final=pup.match_shape(X_photons_test, X_photons_test_set)
-    #X_muons_train_final=pup.match_shape(X_muons_train, X_muons_train_set)
-    #X_muons_test_final=pup.match_shape(X_muons_test, X_muons_test_set)
    
-    return X_jets_train_final, X_jets_test_final, X_photons_train_final, X_photons_test_final, X_muons_train_final, X_muons_test_final, Y_train, Y_test, W_train, W_test
-    
-    #return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test
-     
+    return X_train_final, X_test_final
