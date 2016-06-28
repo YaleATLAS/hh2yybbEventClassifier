@@ -1,5 +1,5 @@
 import json
-from data_processing import read_in, shuffle_split_scale
+from data_processing import read_in, shuffle_split, scale
 #from plotting import plot_inputs, plot_performance
 #from nn_model import train, test
 
@@ -37,7 +37,10 @@ def main(json_config, exclude_vars):
     X_photons_train, X_photons_test, \
     X_muons_train, X_muons_test, \
     y_train, y_test, \
-    w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+    w_train, w_test = shuffle_split(X_jets, X_photons, X_muons, y, w)
+    X_jets_train_final, X_jets_test_final=scale(X_jets_train, X_jets_test)
+    X_photons_train_final, X_photons_test_final=scale(X_photons_train, X_photons_test)
+    X_muons_train_final, X_muons_test_final=scale(X_muons_train, X_muons_test)
     
     # -- plot distributions:
     # this should produce weighted histograms of the input distributions for all variables
