@@ -53,7 +53,7 @@ def read_in(class_files_dict, exclude_vars):
     
     #convert files to pd data frames, assign key to y, concat all files
     def _make_df(val, key):
-        df = _root2pandas(val, 'events')
+        df = pup.root2panda(val, 'events')
         df['y'] = key
         return df
 

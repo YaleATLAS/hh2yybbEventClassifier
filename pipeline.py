@@ -1,7 +1,7 @@
 import json
 from data_processing import read_in, shuffle_split_scale
 import pandautils as pup
-import deepdish.io as io
+import cPickle
 #from plotting import plot_inputs, plot_performance
 #from nn_model import train, test
 
@@ -44,8 +44,8 @@ def main(json_config, exclude_vars):
     y_train, y_test, \
     w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
 
-    # -- save out to hdf5
-    io.save('processed_data.h5', {
+    # -- save out to pickle
+    cPickle.dump({
         'X_jets_train' : X_jets_train,
         'X_jets_test' : X_jets_test,
         'X_photons_train' : X_photons_train,
@@ -57,7 +57,9 @@ def main(json_config, exclude_vars):
         'w_train' : w_train,
         'w_test' : w_test,
         'varlist' : varlist
-    })
+        }, 
+        open('processed_data.pkl', 'wb'),
+        protocol=cPickle.HIGHEST_PROTOCOL)
 
     # -- plot distributions:
     # this should produce weighted histograms of the input distributions for all variables
