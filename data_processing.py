@@ -6,7 +6,6 @@ import glob
 import argparse
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.cross_validation import train_test_split
-from compiler.ast import flatten
 import pandautils as pup
 import pandas as pd 
 
