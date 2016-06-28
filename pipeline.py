@@ -1,5 +1,7 @@
 import json
-from data_processing import read_in, shuffle_split, scale
+from data_processing import read_in, shuffle_split_scale
+import pandautils as pup
+import cPickle
 #from plotting import plot_inputs, plot_performance
 #from nn_model import train, test
 
@@ -25,23 +27,40 @@ def main(json_config, exclude_vars):
                         ...
                      }
          exclude_vars: list of strings of names of branches not to be used for training   
+    Saves:
+    ------
+        'processed_data.h5': dictionary with processed ndarrays (X, y, w) for all particles for training and testing
     '''
     # -- load in the JSON file
     class_files_dict = json.load(open(json_config))
 
     # -- transform ROOT files into standard ML format (ndarrays) 
     X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict, exclude_vars)
-    
+
     # -- shuffle, split samples into train and test set, scale features
     X_jets_train, X_jets_test, \
     X_photons_train, X_photons_test, \
     X_muons_train, X_muons_test, \
     y_train, y_test, \
-    w_train, w_test = shuffle_split(X_jets, X_photons, X_muons, y, w)
-    X_jets_train_final, X_jets_test_final=scale(X_jets_train, X_jets_test)
-    X_photons_train_final, X_photons_test_final=scale(X_photons_train, X_photons_test)
-    X_muons_train_final, X_muons_test_final=scale(X_muons_train, X_muons_test)
-    
+    w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+
+    # -- save out to pickle
+    cPickle.dump({
+        'X_jets_train' : X_jets_train,
+        'X_jets_test' : X_jets_test,
+        'X_photons_train' : X_photons_train,
+        'X_photons_test' : X_photons_test,
+        'X_muons_train' : X_muons_train,
+        'X_muons_test' : X_muons_test,
+        'y_train' : y_train,
+        'y_test' : y_test,
+        'w_train' : w_train,
+        'w_test' : w_test,
+        'varlist' : varlist
+        }, 
+        open('processed_data.pkl', 'wb'),
+        protocol=cPickle.HIGHEST_PROTOCOL)
+
     # -- plot distributions:
     # this should produce weighted histograms of the input distributions for all variables
     # on each plot, the train and test distributions should be shown for every class
