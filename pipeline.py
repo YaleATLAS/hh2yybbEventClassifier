@@ -2,6 +2,9 @@ import json
 from data_processing import read_in, shuffle_split_scale
 import pandautils as pup
 import cPickle
+from plotting import plot_inputs
+import utils
+import logging
 #from plotting import plot_inputs, plot_performance
 #from nn_model import train, test
 
@@ -31,41 +34,74 @@ def main(json_config, exclude_vars):
     ------
         'processed_data.h5': dictionary with processed ndarrays (X, y, w) for all particles for training and testing
     '''
+    logger = logging.getLogger('Main')
+
     # -- load in the JSON file
+    logger.info('Loading JSON config')
     class_files_dict = json.load(open(json_config))
 
-    # -- transform ROOT files into standard ML format (ndarrays) 
-    X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict, exclude_vars)
+    # -- hash the config dictionary to check if the pickled data exists
+    from hashlib import md5
+    def sha(s):
+        '''Get a unique identifier for an object'''
+        m = md5()
+        m.update(s.__repr__())
+        return m.hexdigest()[:5]
 
-    # -- shuffle, split samples into train and test set, scale features
-    X_jets_train, X_jets_test, \
-    X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test, \
-    y_train, y_test, \
-    w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+    # -- if the pickle exists, use it
+    try:
+        data = cPickle.load(open('processed_data_' + sha(class_files_dict) + '.pkl', 'rb'))
+        logger.info('Preprocessed data found in pickle')
+        X_jets_train = data['X_jets_train']
+        X_jets_test = data['X_jets_test']
+        X_photons_train = data['X_photons_train']
+        X_photons_test = data['X_photons_test']
+        X_muons_train = data['X_muons_train']
+        X_muons_test = data['X_muons_test']
+        y_train = data['y_train']
+        y_test = data['y_test']
+        w_train = data['w_train']
+        w_test = data['w_test']
+        varlist = data['varlist']
 
-    # -- save out to pickle
-    cPickle.dump({
-        'X_jets_train' : X_jets_train,
-        'X_jets_test' : X_jets_test,
-        'X_photons_train' : X_photons_train,
-        'X_photons_test' : X_photons_test,
-        'X_muons_train' : X_muons_train,
-        'X_muons_test' : X_muons_test,
-        'y_train' : y_train,
-        'y_test' : y_test,
-        'w_train' : w_train,
-        'w_test' : w_test,
-        'varlist' : varlist
-        }, 
-        open('processed_data.pkl', 'wb'),
-        protocol=cPickle.HIGHEST_PROTOCOL)
-
+    # -- otherwise, process the new data
+    except IOError:
+        logger.info('Preprocessed data not found')
+        logger.info('Processing data')
+        # -- transform ROOT files into standard ML format (ndarrays) 
+        X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict, exclude_vars)
+        # -- shuffle, split samples into train and test set, scale features
+        X_jets_train, X_jets_test, \
+        X_photons_train, X_photons_test, \
+        X_muons_train, X_muons_test, \
+        y_train, y_test, \
+        w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+        # -- save out to pickle
+        logger.info('Saving processed data to pickle')
+        cPickle.dump({
+            'X_jets_train' : X_jets_train,
+            'X_jets_test' : X_jets_test,
+            'X_photons_train' : X_photons_train,
+            'X_photons_test' : X_photons_test,
+            'X_muons_train' : X_muons_train,
+            'X_muons_test' : X_muons_test,
+            'y_train' : y_train,
+            'y_test' : y_test,
+            'w_train' : w_train,
+            'w_test' : w_test,
+            'varlist' : varlist
+            }, 
+            open('processed_data_' + sha(class_files_dict) + '.pkl', 'wb'),
+            protocol=cPickle.HIGHEST_PROTOCOL)
+    
     # -- plot distributions:
-    # this should produce weighted histograms of the input distributions for all variables
-    # on each plot, the train and test distributions should be shown for every class
-    # plots should be saved out a pdf with informative names
-'''    plot_inputs(
+    '''
+    This should produce normed, weighted histograms of the input distributions for all variables
+    The train and test distributions should be shown for every class
+    Plots should be saved out a pdf with informative names
+    '''
+    logger.info('Plotting input distributions')
+    plot_inputs(
         X_jets_train, X_jets_test, 
         X_photons_train, X_photons_test, 
         X_muons_train, X_muons_test, 
@@ -74,26 +110,28 @@ def main(json_config, exclude_vars):
         varlist 
         )
 
-    # -- train
-    # design a Keras NN with three RNN streams (jets, photons, muons)
-    # combine the outputs and process them through a bunch of FF layers
-    # use a validation split of 20%
-    # save out the weights to hdf5 and the model to yaml
-    net = train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train)
+    # # -- train
+    # # design a Keras NN with three RNN streams (jets, photons, muons)
+    # # combine the outputs and process them through a bunch of FF layers
+    # # use a validation split of 20%
+    # # save out the weights to hdf5 and the model to yaml
+    # net = train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train)
 
-    # -- test
-    # evaluate performance on the test set
-    yhat = test(net, X_jets_test, X_photons_test, X_muons_test, y_test, w_test)
+    # # -- test
+    # # evaluate performance on the test set
+    # yhat = test(net, X_jets_test, X_photons_test, X_muons_test, y_test, w_test)
 
-    # -- plot performance
-    # produce ROC curves to evaluate performance
-    # save them out to pdf
-    plot_performance(yhat, y_test, w_test)
-'''
+    # # -- plot performance
+    # # produce ROC curves to evaluate performance
+    # # save them out to pdf
+    # plot_performance(yhat, y_test, w_test)
+
 if __name__ == '__main__':
     
     import sys
     import argparse
+
+    utils.configure_logging()
 
     # -- read in arguments
     parser = argparse.ArgumentParser()

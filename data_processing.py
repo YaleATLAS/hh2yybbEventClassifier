@@ -4,6 +4,7 @@ import argparse
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.cross_validation import train_test_split
 import pandautils as pup
+import warnings
 
 def _build_X(events, phrase, exclude_vars):
     '''slices related branches into a numpy array
@@ -83,15 +84,17 @@ def _scale(matrix_train, matrix_test):
     Returns:
         the same matrices after scaling
     '''
-    from sklearn.preprocessing import StandardScaler
-    ref_test = matrix_test[:, 0]
-    ref_train = matrix_train[:, 0]
-    for col in xrange(matrix_train.shape[1]):
-        scaler = StandardScaler()
-        matrix_train[:, col] = pup.match_shape(
-            scaler.fit_transform(pup.flatten(matrix_train[:, col]).reshape(-1, 1)).ravel(), ref_train)
-        matrix_test[:, col] = pup.match_shape(
-            scaler.transform(pup.flatten(matrix_test[:, col]).reshape(-1, 1)).ravel(), ref_test)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+
+        ref_test = matrix_test[:, 0]
+        ref_train = matrix_train[:, 0]
+        for col in xrange(matrix_train.shape[1]):
+            scaler = StandardScaler()
+            matrix_train[:, col] = pup.match_shape(
+                scaler.fit_transform(pup.flatten(matrix_train[:, col]).reshape(-1, 1)).ravel(), ref_train)
+            matrix_test[:, col] = pup.match_shape(
+                scaler.transform(pup.flatten(matrix_test[:, col]).reshape(-1, 1)).ravel(), ref_test)
 
     return matrix_train, matrix_test
 
