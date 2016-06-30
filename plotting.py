@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm 
-import pandautils as pup       
+import pandautils as pup
+import os
 
 def _plot_X(train, test, y_train, y_test, w_train, w_test, varlist, feature):
 	'''
@@ -18,39 +19,59 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, varlist, feature):
 	Returns:
 		Saves .pdf histograms for each feature-related branch plotting the training and test sets for each class
 	'''
-
-	w_train_ext = np.array(pup.flatten([[w]*(len(train[i,0])) for i, w in enumerate(w_train)]))
-	w_test_ext = np.array(pup.flatten([[w]*(len(test[i,0])) for i, w in enumerate(w_test)]))
-	y_train_ext = np.array(pup.flatten([[y]*(len(train[i,0])) for i, y in enumerate(y_train)]))
-	y_test_ext = np.array(pup.flatten([[y]*(len(test[i,0])) for i, y in enumerate(y_test)]))
-	print varlist
-	column_counter=0
+	# -- extend w and y arrays to match the total number of particles per event
+	w_train_ext = np.array(pup.flatten([[w] * (len(train[i, 0])) for i, w in enumerate(w_train)]))
+	w_test_ext = np.array(pup.flatten([[w] * (len(test[i, 0])) for i, w in enumerate(w_test)]))
+	y_train_ext = np.array(pup.flatten([[y] * (len(train[i, 0])) for i, y in enumerate(y_train)]))
+	y_test_ext = np.array(pup.flatten([[y] * (len(test[i, 0])) for i, y in enumerate(y_test)]))
+	
+	# -- we keep a column counter because `varlist` contains all variables for all particles,
+	# but each X matrix only contains as many columns as the number of variables 
+	# related to that specific paritcle type
+	column_counter = 0
+	# -- loop through the variables
 	for key in varlist:
 		if key.startswith(feature):
-			flat_train = pup.flatten(train[:,column_counter])
-			flat_test = pup.flatten(test[:,column_counter])
+			flat_train = pup.flatten(train[:, column_counter])
+			flat_test = pup.flatten(test[:, column_counter])
 			matplotlib.rcParams.update({'font.size': 16})
 			fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
-			bins = np.linspace(min(min(flat_train), 
-				min(flat_test)), 
-				max(max(flat_train), 
-				max(flat_test)), 30)
-			column_counter=column_counter+1
-			color=iter(cm.rainbow(np.linspace(0,1,2)))
+			bins = np.linspace(
+				min(min(flat_train), min(flat_test)), 
+				max(max(flat_train), max(flat_test)), 
+				30)
+			color = iter(cm.rainbow(np.linspace(0, 1, 2)))
+			# -- loop through the classes
 			for k in range(len(np.unique(y_train))):
-				c=next(color)
-				_ = plt.hist(flat_train[y_train_ext==k], bins=bins, histtype='step', normed=True, 
-					label='Xtr class:'+str(k),weights=w_train_ext[y_train_ext==k],
-					color = c, linewidth=1)
-				_ = plt.hist(flat_test[y_test_ext==k], bins=bins, histtype='step', normed=True,
-					label='Xte class:'+str(k),weights=w_test_ext[y_test_ext==k], 
-					linewidth=2, color = c, linestyle='dashed')	
+				c = next(color)
+				_ = plt.hist(flat_train[y_train_ext == k], 
+					bins=bins, 
+					histtype='step', 
+					normed=True, 
+					label='Train - class: '+str(k),
+					weights=w_train_ext[y_train_ext == k],
+					color=c, 
+					linewidth=1)
+				_ = plt.hist(flat_test[y_test_ext == k], 
+					bins=bins, 
+					histtype='step', 
+					normed=True,
+					label='Test  - class: ' + str(k),
+					weights=w_test_ext[y_test_ext == k], 
+					color=c,
+					linewidth=2, 
+					linestyle='dashed')	
 			plt.xlabel(key)
 			plt.yscale('log')
 			plt.ylabel('Weighted Events')
 			plt.legend()
-			plt.show()
-			plt.savefig(key+'.pdf')
+			try:
+				plt.savefig(os.path.join('plots', key + '.pdf'))
+			except IOError:
+				os.makedirs('plots')
+				plt.savefig(os.path.join('plots', key + '.pdf'))
+			#plt.show()
+			column_counter += 1
 
 def plot_inputs(X_jets_train, X_jets_test, X_photons_train, X_photons_test, 
 	X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist):
