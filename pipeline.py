@@ -33,9 +33,11 @@ def main(json_config, exclude_vars):
     '''
     # -- load in the JSON file
     class_files_dict = json.load(open(json_config))
+    print 'pipeline: opened and loaded'
 
     # -- transform ROOT files into standard ML format (ndarrays) 
     X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict, exclude_vars)
+    print 'pipeline: read in'
 
     # -- shuffle, split samples into train and test set, scale features
     X_jets_train, X_jets_test, \
@@ -43,9 +45,10 @@ def main(json_config, exclude_vars):
     X_muons_train, X_muons_test, \
     y_train, y_test, \
     w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+    print 'pipeline: shuffled and split'
 
     # -- save out to pickle
-    cPickle.dump({
+    '''cPickle.dump({
         'X_jets_train' : X_jets_train,
         'X_jets_test' : X_jets_test,
         'X_photons_train' : X_photons_train,
@@ -60,7 +63,8 @@ def main(json_config, exclude_vars):
         }, 
         open('processed_data.pkl', 'wb'),
         protocol=cPickle.HIGHEST_PROTOCOL)
-
+    print 'pipeline: pickles saved'
+    '''
     # -- plot distributions:
     # this should produce weighted histograms of the input distributions for all variables
     # on each plot, the train and test distributions should be shown for every class
@@ -100,6 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('config', help="JSON file that specifies classes and corresponding ROOT files' paths")
     parser.add_argument('--exclude', help="names of branches to exclude from training", nargs="*", default=[])
     args = parser.parse_args()
+    print 'pipeline: main run'
 
     # -- pass arguments to main
     sys.exit(main(args.config, args.exclude))
