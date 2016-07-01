@@ -132,3 +132,14 @@ def shuffle_split_scale(X_jets, X_photons, X_muons, y, w):
     X_muons_train, X_muons_test = _scale(X_muons_train, X_muons_test)
 
     return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test
+
+
+def zero_padding(X, max_length):
+    '''
+
+    '''
+    data = -999 * np.ones((X.shape[0], max_length, X.shape[1]), dtype='float32')
+    for i, row in enumerate(X):
+        data[i, :min(len(row[0]), max_length), :] = np.array(row.tolist()).T[:min(len(row[0]), max_length), :]
+
+    return data

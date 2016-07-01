@@ -1,5 +1,5 @@
 import json
-from data_processing import read_in, shuffle_split_scale
+from data_processing import read_in, shuffle_split_scale, zero_padding
 import pandautils as pup
 import cPickle
 from plotting import plot_inputs
@@ -93,7 +93,7 @@ def main(json_config, exclude_vars):
             }, 
             open('processed_data_' + sha(class_files_dict) + '.pkl', 'wb'),
             protocol=cPickle.HIGHEST_PROTOCOL)
-    
+
     # -- plot distributions:
     '''
     This should produce normed, weighted histograms of the input distributions for all variables
@@ -109,6 +109,19 @@ def main(json_config, exclude_vars):
         w_train, w_test,
         varlist 
         )
+
+    X_jets_train, X_jets_test, \
+    X_photons_train, X_photons_test, \
+    X_muons_train, X_muons_test = map(zero_padding, 
+        [
+            X_jets_train, X_jets_test, 
+            X_photons_train, X_photons_test, 
+            X_muons_train, X_muons_test
+        ],
+        [5, 5, 3, 3, 2, 2]
+    )
+
+    print  X_jets_train.shape, X_photons_train.shape
 
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
