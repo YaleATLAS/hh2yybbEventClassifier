@@ -132,3 +132,25 @@ def shuffle_split_scale(X_jets, X_photons, X_muons, y, w):
     X_muons_train, X_muons_test = _scale(X_muons_train, X_muons_test)
 
     return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test
+
+
+def padding(X, max_length, value=-999):
+    '''
+    Transforms X to a 3D array where the dimensions correspond to [n_ev, n_particles, n_features].
+    n_particles is now fixed and equal to max_length.
+    If the number of particles in an event was < max_length, the missing particles will be filled with default values
+    If the number of particles in an event was > max_length, the excess particles will be removed
+    Args:
+        X: ndarray [n_ev, n_features] with an arbitrary number of particles per event
+        max_length: int, the number of particles to keep per event 
+        value (optional): the value to input in case there are not enough particles in the event, default=-999
+    Returns:
+        data: ndarray [n_ev, n_particles, n_features], padded version of X with fixed number of particles
+    Note: 
+        Use Masking to avoid the particles with artificial entries = -999
+    '''
+    data = value * np.ones((X.shape[0], max_length, X.shape[1]), dtype='float32')
+    for i, row in enumerate(X):
+        data[i, :min(len(row[0]), max_length), :] = np.array(row.tolist()).T[:min(len(row[0]), max_length), :]
+
+    return data
