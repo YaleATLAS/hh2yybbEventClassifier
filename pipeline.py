@@ -1,5 +1,5 @@
 import json
-from data_processing import read_in, shuffle_split_scale, zero_padding
+from data_processing import read_in, shuffle_split_scale, padding
 import pandautils as pup
 import cPickle
 from plotting import plot_inputs
@@ -112,7 +112,7 @@ def main(json_config, exclude_vars):
 
     X_jets_train, X_jets_test, \
     X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test = map(zero_padding, 
+    X_muons_train, X_muons_test = map(padding, 
         [
             X_jets_train, X_jets_test, 
             X_photons_train, X_photons_test, 
@@ -120,8 +120,6 @@ def main(json_config, exclude_vars):
         ],
         [5, 5, 3, 3, 2, 2]
     )
-
-    print  X_jets_train.shape, X_photons_train.shape
 
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
