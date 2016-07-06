@@ -8,7 +8,7 @@ import logging
 #from plotting import plot_inputs, plot_performance
 #from nn_model import train, test
 
-def main(json_config, exclude_vars):
+def main(json_config, tree_name):
     '''
     Args:
     -----
@@ -29,7 +29,7 @@ def main(json_config, exclude_vars):
                         ],
                         ...
                      }
-         exclude_vars: list of strings of names of branches not to be used for training   
+         tree_name:    
     Saves:
     ------
         'processed_data.h5': dictionary with processed ndarrays (X, y, w) for all particles for training and testing
@@ -38,7 +38,9 @@ def main(json_config, exclude_vars):
 
     # -- load in the JSON file
     logger.info('Loading JSON config')
-    class_files_dict = json.load(open(json_config))
+    config = utils.load_config(json_config)
+    class_files_dict = config['classes']
+    particles = config['particles']
 
     # -- hash the config dictionary to check if the pickled data exists
     from hashlib import md5
@@ -48,49 +50,31 @@ def main(json_config, exclude_vars):
         m.update(s.__repr__())
         return m.hexdigest()[:5]
 
-    # -- if the pickle exists, use it
+    #-- if the pickle exists, use it
     try:
         data = cPickle.load(open('processed_data_' + sha(class_files_dict) + '.pkl', 'rb'))
         logger.info('Preprocessed data found in pickle')
-        X_jets_train = data['X_jets_train']
-        X_jets_test = data['X_jets_test']
-        X_photons_train = data['X_photons_train']
-        X_photons_test = data['X_photons_test']
-        X_muons_train = data['X_muons_train']
-        X_muons_test = data['X_muons_test']
-        y_train = data['y_train']
-        y_test = data['y_test']
-        w_train = data['w_train']
-        w_test = data['w_test']
-        varlist = data['varlist']
 
-    # -- otherwise, process the new data
+    # -- otherwise, process the new data 
     except IOError:
         logger.info('Preprocessed data not found')
         logger.info('Processing data')
         # -- transform ROOT files into standard ML format (ndarrays) 
-        X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict, exclude_vars)
+        X, y, w = read_in(class_files_dict, tree_name, particles)
+
         # -- shuffle, split samples into train and test set, scale features
-        X_jets_train, X_jets_test, \
-        X_photons_train, X_photons_test, \
-        X_muons_train, X_muons_test, \
-        y_train, y_test, \
-        w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+        data = shuffle_split_scale(X, y, w) #X_muons, y, w)
+  
+        data.update({
+            'varlist' : [
+                branch 
+                for particle_info in particles.values() 
+                for branch in particle_info['branches']
+            ]
+        })
         # -- save out to pickle
         logger.info('Saving processed data to pickle')
-        cPickle.dump({
-            'X_jets_train' : X_jets_train,
-            'X_jets_test' : X_jets_test,
-            'X_photons_train' : X_photons_train,
-            'X_photons_test' : X_photons_test,
-            'X_muons_train' : X_muons_train,
-            'X_muons_test' : X_muons_test,
-            'y_train' : y_train,
-            'y_test' : y_test,
-            'w_train' : w_train,
-            'w_test' : w_test,
-            'varlist' : varlist
-            }, 
+        cPickle.dump(data, 
             open('processed_data_' + sha(class_files_dict) + '.pkl', 'wb'),
             protocol=cPickle.HIGHEST_PROTOCOL)
 
@@ -101,25 +85,12 @@ def main(json_config, exclude_vars):
     Plots should be saved out a pdf with informative names
     '''
     logger.info('Plotting input distributions')
-    plot_inputs(
-        X_jets_train, X_jets_test, 
-        X_photons_train, X_photons_test, 
-        X_muons_train, X_muons_test, 
-        y_train, y_test, 
-        w_train, w_test,
-        varlist 
-        )
+    plot_inputs(data, particles.keys())
 
-    X_jets_train, X_jets_test, \
-    X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test = map(padding, 
-        [
-            X_jets_train, X_jets_test, 
-            X_photons_train, X_photons_test, 
-            X_muons_train, X_muons_test
-        ],
-        [5, 5, 3, 3, 2, 2]
-    )
+    logger.info('Padding')
+    for key in data:
+        if key.startswith('X_'):
+            data[key] = padding(data[key], particles[key.split('_')[1]]['max_length'])
 
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
@@ -147,8 +118,8 @@ if __name__ == '__main__':
     # -- read in arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help="JSON file that specifies classes and corresponding ROOT files' paths")
-    parser.add_argument('--exclude', help="names of branches to exclude from training", nargs="*", default=[])
+    parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
     args = parser.parse_args()
 
     # -- pass arguments to main
-    sys.exit(main(args.config, args.exclude))
+    sys.exit(main(args.config, args.tree))

@@ -40,7 +40,7 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, varlist, feature):
 				min(min(flat_train), min(flat_test)), 
 				max(max(flat_train), max(flat_test)), 
 				30)
-			color = iter(cm.rainbow(np.linspace(0, 1, 2)))
+			color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_train)))))
 			# -- loop through the classes
 			for k in range(len(np.unique(y_train))):
 				c = next(color)
@@ -48,7 +48,7 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, varlist, feature):
 					bins=bins, 
 					histtype='step', 
 					normed=True, 
-					label='Train - class: '+str(k),
+					label='Train - class: ' + str(k),
 					weights=w_train_ext[y_train_ext == k],
 					color=c, 
 					linewidth=1)
@@ -73,8 +73,10 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, varlist, feature):
 			#plt.show()
 			column_counter += 1
 
-def plot_inputs(X_jets_train, X_jets_test, X_photons_train, X_photons_test, 
-	X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist):
+# def plot_inputs(X_jets_train, X_jets_test, X_photons_train, X_photons_test, 
+# 	y_train, y_test, w_train, w_test, varlist):
+def plot_inputs(data, particle_names):
+	#X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist):
 	'''
 	Args:
 		X_jets_train: ndarray [n_ev_train, n_jet_feat] containing the 
@@ -105,6 +107,16 @@ def plot_inputs(X_jets_train, X_jets_test, X_photons_train, X_photons_test,
 		sets of each class for each feature 
 	'''
 	
-	_plot_X(X_jets_train, X_jets_test, y_train, y_test, w_train, w_test, varlist, 'Jet')
-	_plot_X(X_photons_train, X_photons_test, y_train, y_test, w_train, w_test, varlist, 'Photon')
-	_plot_X(X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist, 'Muon')
+	for particle in particle_names:
+		_plot_X(
+			data['X_' + particle + '_train'], 
+			data['X_' + particle + '_test'], 
+			data['y_train'],
+			data['y_test'], 
+			data['w_train'], 
+			data['w_test'], 
+			data['varlist'],
+			particle)
+	# _plot_X(X_jets_train, X_jets_test, y_train, y_test, w_train, w_test, varlist, 'jet')
+	# _plot_X(X_photons_train, X_photons_test, y_train, y_test, w_train, w_test, varlist, 'photon')
+	#_plot_X(X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist, 'Muon')
