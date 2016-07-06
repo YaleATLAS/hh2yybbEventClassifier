@@ -95,7 +95,6 @@ def plot_inputs(data, particle_names):
 		sets of each class for each feature 
 	'''
 	
-<<<<<<< HEAD
 	_plot_X(X_jets_train, X_jets_test, y_train, y_test, w_train, w_test, varlist, 'Jet')
 	_plot_X(X_photons_train, X_photons_test, y_train, y_test, w_train, w_test, varlist, 'Photon')
 	_plot_X(X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist, 'Muon')
@@ -120,11 +119,10 @@ def plot_NN(yhat, y_test, w_test):
 			plt.legend()
 			plt.show()
 
-||||||| merged common ancestors
 	_plot_X(X_jets_train, X_jets_test, y_train, y_test, w_train, w_test, varlist, 'Jet')
 	_plot_X(X_photons_train, X_photons_test, y_train, y_test, w_train, w_test, varlist, 'Photon')
 	_plot_X(X_muons_train, X_muons_test, y_train, y_test, w_train, w_test, varlist, 'Muon')
-=======
+
 	for particle in particle_names:
 		_plot_X(
 			data['X_' + particle + '_train'], 
@@ -137,4 +135,3 @@ def plot_NN(yhat, y_test, w_test):
 			data['LabelEncoder'],
 			particle
 			)
->>>>>>> 1a214b6daea28f00860eb31110c2790fe6417efb

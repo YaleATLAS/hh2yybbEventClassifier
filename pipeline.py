@@ -98,7 +98,6 @@ def main(json_config, tree_name):
             open(pickle_name, 'wb'),
             protocol=cPickle.HIGHEST_PROTOCOL)
 
-<<<<<<< HEAD
     # -- plot distributions:
     '''
     This should produce normed, weighted histograms of the input distributions for all variables
@@ -126,7 +125,6 @@ def main(json_config, tree_name):
         [5, 5, 3, 3, 2, 2]
     )
 
-||||||| merged common ancestors
     # -- plot distributions:
     '''
     This should produce normed, weighted histograms of the input distributions for all variables
@@ -157,7 +155,6 @@ def main(json_config, tree_name):
     print  X_jets_train.shape, X_photons_train.shape
 
 =======
->>>>>>> 1a214b6daea28f00860eb31110c2790fe6417efb
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
     io.save(('X_jets_NN.h5'), NN(X_jets_train, X_jets_test, y_train))
