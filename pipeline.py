@@ -1,5 +1,5 @@
 import json
-from data_processing import read_in, shuffle_split_scale, zero_padding
+from data_processing import read_in, shuffle_split_scale, padding
 import pandautils as pup
 import cPickle
 from plotting import plot_inputs, plot_NN
@@ -10,11 +10,11 @@ import deepdish.io as io
 #from plotting import plot_inputs, plot_performance
 #from nn_model import train, test
 
-def main(json_config, exclude_vars):
+def main(json_config, tree_name):
     '''
     Args:
     -----
-        json_config: a JSON file, containing a dictionary that links the names of the different
+        json_config: path to a JSON file, containing a dictionary that links the names of the different
                      classes in the classification problem to the paths of the ROOT files
                      associated with each class; for example:
 
@@ -31,16 +31,18 @@ def main(json_config, exclude_vars):
                         ],
                         ...
                      }
-         exclude_vars: list of strings of names of branches not to be used for training   
+         tree_name: string, name of the tree that contains the correct branches
     Saves:
     ------
-        'processed_data.h5': dictionary with processed ndarrays (X, y, w) for all particles for training and testing
+        'processed_data_<hash>.pkl': dictionary with processed ndarrays (X, y, w) for all particles for training and testing
     '''
     logger = logging.getLogger('Main')
 
     # -- load in the JSON file
-    logger.info('Loading JSON config')
-    class_files_dict = json.load(open(json_config))
+    logger.info('Loading information from ' + json_config)
+    config = utils.load_config(json_config)
+    class_files_dict = config['classes']
+    particles_dict = config['particles']
 
     # -- hash the config dictionary to check if the pickled data exists
     from hashlib import md5
@@ -50,52 +52,53 @@ def main(json_config, exclude_vars):
         m.update(s.__repr__())
         return m.hexdigest()[:5]
 
-    # -- if the pickle exists, use it
+    #-- if the pickle exists, use it
+    pickle_name = 'processed_data_' + sha(config) + '.pkl'
     try:
-        data = cPickle.load(open('processed_data_' + sha(class_files_dict) + '.pkl', 'rb'))
-        logger.info('Preprocessed data found in pickle')
-        X_jets_train = data['X_jets_train']
-        X_jets_test = data['X_jets_test']
-        X_photons_train = data['X_photons_train']
-        X_photons_test = data['X_photons_test']
-        X_muons_train = data['X_muons_train']
-        X_muons_test = data['X_muons_test']
-        y_train = data['y_train']
-        y_test = data['y_test']
-        w_train = data['w_train']
-        w_test = data['w_test']
-        varlist = data['varlist']
-
-    # -- otherwise, process the new data
+        logger.info('Attempting to read from {}'.format(pickle_name))
+        data = cPickle.load(open(pickle_name, 'rb'))
+        logger.info('Pre-processed data found and loaded from pickle')
+    # -- otherwise, process the new data 
     except IOError:
-        logger.info('Preprocessed data not found')
+        logger.info('Pre-processed data not found in {}'.format(pickle_name))
         logger.info('Processing data')
         # -- transform ROOT files into standard ML format (ndarrays) 
-        X_jets, X_photons, X_muons, y, w, varlist = read_in(class_files_dict, exclude_vars)
+        X, y, w, le = read_in(class_files_dict, tree_name, particles_dict)
+
         # -- shuffle, split samples into train and test set, scale features
-        X_jets_train, X_jets_test, \
-        X_photons_train, X_photons_test, \
-        X_muons_train, X_muons_test, \
-        y_train, y_test, \
-        w_train, w_test = shuffle_split_scale(X_jets, X_photons, X_muons, y, w)
+        data = shuffle_split_scale(X, y, w) 
+  
+        data.update({
+            'varlist' : [
+                branch 
+                for particle_info in particles_dict.values() 
+                for branch in particle_info['branches']
+            ],
+            'LabelEncoder' : le
+        })
+
+        # -- plot distributions:
+        '''
+        This should produce normed, weighted histograms of the input distributions for all variables
+        The train and test distributions should be shown for every class
+        Plots should be saved out a pdf with informative names
+        '''
+        logger.info('Saving input distributions in ./plots/')
+        plot_inputs(data, particles_dict.keys())
+
+        logger.info('Padding')
+        for key in data:
+            if key.startswith('X_'):
+                data[key] = padding(data[key], particles_dict[key.split('_')[1]]['max_length']) 
+                # ^ assuming naming convention: X_<particle>_train, X_<particle>_test 
+
         # -- save out to pickle
-        logger.info('Saving processed data to pickle')
-        cPickle.dump({
-            'X_jets_train' : X_jets_train,
-            'X_jets_test' : X_jets_test,
-            'X_photons_train' : X_photons_train,
-            'X_photons_test' : X_photons_test,
-            'X_muons_train' : X_muons_train,
-            'X_muons_test' : X_muons_test,
-            'y_train' : y_train,
-            'y_test' : y_test,
-            'w_train' : w_train,
-            'w_test' : w_test,
-            'varlist' : varlist
-            }, 
-            open('processed_data_' + sha(class_files_dict) + '.pkl', 'wb'),
+        logger.info('Saving processed data to {}'.format(pickle_name))
+        cPickle.dump(data, 
+            open(pickle_name, 'wb'),
             protocol=cPickle.HIGHEST_PROTOCOL)
 
+<<<<<<< HEAD
     # -- plot distributions:
     '''
     This should produce normed, weighted histograms of the input distributions for all variables
@@ -123,6 +126,38 @@ def main(json_config, exclude_vars):
         [5, 5, 3, 3, 2, 2]
     )
 
+||||||| merged common ancestors
+    # -- plot distributions:
+    '''
+    This should produce normed, weighted histograms of the input distributions for all variables
+    The train and test distributions should be shown for every class
+    Plots should be saved out a pdf with informative names
+    '''
+    logger.info('Plotting input distributions')
+    plot_inputs(
+        X_jets_train, X_jets_test, 
+        X_photons_train, X_photons_test, 
+        X_muons_train, X_muons_test, 
+        y_train, y_test, 
+        w_train, w_test,
+        varlist 
+        )
+
+    X_jets_train, X_jets_test, \
+    X_photons_train, X_photons_test, \
+    X_muons_train, X_muons_test = map(zero_padding, 
+        [
+            X_jets_train, X_jets_test, 
+            X_photons_train, X_photons_test, 
+            X_muons_train, X_muons_test
+        ],
+        [5, 5, 3, 3, 2, 2]
+    )
+
+    print  X_jets_train.shape, X_photons_train.shape
+
+=======
+>>>>>>> 1a214b6daea28f00860eb31110c2790fe6417efb
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
     io.save(('X_jets_NN.h5'), NN(X_jets_train, X_jets_test, y_train))
@@ -139,16 +174,16 @@ def main(json_config, exclude_vars):
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    # net = train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train)
+    # net = train(data)
 
     # # -- test
     # # evaluate performance on the test set
-    # yhat = test(net, X_jets_test, X_photons_test, X_muons_test, y_test, w_test)
+    # yhat = test(net, data)
 
     # # -- plot performance
     # # produce ROC curves to evaluate performance
     # # save them out to pdf
-    # plot_performance(yhat, y_test, w_test)
+    # plot_performance(yhat, data['y_test'], data['w_test'])
 
 if __name__ == '__main__':
     
@@ -159,9 +194,9 @@ if __name__ == '__main__':
 
     # -- read in arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', help="JSON file that specifies classes and corresponding ROOT files' paths")
-    parser.add_argument('--exclude', help="names of branches to exclude from training", nargs="*", default=[])
+    parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
+    parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
     args = parser.parse_args()
 
     # -- pass arguments to main
-    sys.exit(main(args.config, args.exclude))
+    sys.exit(main(args.config, args.tree))

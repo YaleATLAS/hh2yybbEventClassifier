@@ -5,21 +5,19 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.cross_validation import train_test_split
 import pandautils as pup
 import warnings
+import logging
+from collections import OrderedDict
+from itertools import izip
 
-def _build_X(events, phrase, exclude_vars):
-    '''slices related branches into a numpy array
-    Args:
-        events: a pandas DataFrame containing the complete data by event
-        phrase: a string like 'Jet' corresponding to the related branches wanted
-    Returns:
-        output_array: a numpy array containing data only pertaining to the related branches
-    '''
-    branch_names = [key for key in events.keys() if (key.startswith(phrase) and (key not in exclude_vars))]
-    sliced_events = events[branch_names].as_matrix()
-    return sliced_events, branch_names
+logger = logging.getLogger('data_processing')
+
+def _pairwise(iterable):
+    '''s -> (s0, s1), (s2, s3), (s4, s5), ...'''
+    a = iter(iterable)
+    return izip(a, a)
 
 
-def read_in(class_files_dict, exclude_vars):
+def read_in(class_files_dict, tree_name, particles):
     '''
     takes in dict mapping class names to list of root files, loads them and slices them into ML format
     Args:
@@ -40,43 +38,67 @@ def read_in(class_files_dict, exclude_vars):
                             ],
                             ...
                           } 
-        exclude_vars: list of strings of names of branches not to be used for training
+        tree_name: string, name of the tree to open in the ntuples
+        particles: dictionary that provides various informations about the different streams in the events,
+                   for example:
+                   {
+                    "jet" :
+                        {
+                            "branches" :
+                                [
+                                    "jet_pt",
+                                    "jet_eta"
+                                ],
+                            "max_length" : 5
+                        },
+                    "photon" :
+                        {
+                            "branches" :
+                                [
+                                    "photon_pt",
+                                    "photon_eta"
+                                ],
+                            "max_length" : 3
+                        }
+                   }
     Returns:
-        X_jets: ndarray [n_ev, n_jet_feat] containing jet related branches
-        X_photons: ndarray [n_ev, n_photon_feat] containing photon related branches
-        X_muons: ndarray [n_ev, n_muon_feat] containing muon related branches
+        X: an OrderedDict containing the feature matrices for the different particle types, e.g.:
+           X = {
+                    "jet" : X_jet,
+                    "photon" : X_photon,
+                    "muon" : X_muon
+           }
+           where each X_<particle> is an ndarray of dimensions [n_ev, n_<particle>features]
         y: ndarray [n_ev, 1] containing the truth labels
-        w: ndarray [n_ev, 1] containing EventWeights
-        jet_branches + photon_branches + muon_branches = list of strings that concatenates the individual 
-                lists of variables for each particle type, e.g.:
-                ['Jet_Px', 'Jet_E', 'Muon_ID', 'Photon_Px']
+        w: ndarray [n_ev, 1] containing the event weights
+        le: LabelEncoder to transform numerical y back to its string values
     '''
     
     #convert files to pd data frames, assign key to y, concat all files
     def _make_df(val, key):
-        df = pup.root2panda(val, 'events')
+        df = pup.root2panda(val, tree_name)
         df['y'] = key
         return df
 
     all_events = pd.concat([_make_df(val, key) for key, val in class_files_dict.iteritems()], ignore_index=True)
-        
-    #slice related branches
-    X_jets, jet_branches = _build_X(all_events, 'Jet', exclude_vars)
-    X_photons, photon_branches = _build_X(all_events, 'Photon', exclude_vars)
-    X_muons, muon_branches = _build_X(all_events, 'Muon', exclude_vars)
     
+    X = OrderedDict()
+    for particle_name, particle_info in particles.iteritems():
+        logger.info('Building X_{}'.format(particle_name))
+        X[particle_name] = all_events[particle_info["branches"]].values
+
     #transform string labels to integer classes
     le = LabelEncoder()
     y = le.fit_transform(all_events['y'].values)
     
-    w = all_events['EventWeight'].values
+    w = all_events['yybb_weight'].values
     
-    return X_jets, X_photons, X_muons, y, w, jet_branches + photon_branches + muon_branches
+    return X, y, w, le
 
 
 def _scale(matrix_train, matrix_test):
     '''
-    Use scikit learn to sclae features to 0 mean, 1 std. 
+    Use scikit learn to scale features to 0 mean, 1 std. 
     Because of event-level structure, we need to flatten X, scale, and then reshape back into event format.
     Args:
         matrix_train: X_train [n_ev_train, n_particle_features], numpy ndarray of unscaled features of events allocated for training
@@ -99,47 +121,62 @@ def _scale(matrix_train, matrix_test):
     return matrix_train, matrix_test
 
 
-def shuffle_split_scale(X_jets, X_photons, X_muons, y, w):
+def shuffle_split_scale(X, y, w):
     '''
-    takes in X_jets, X_photons, X_Muons, y and w nd arrays, shuffles them, splits them into test (40%) and training (60%) sets
+    Shuffle data, split it into test (40%) and training (60%) sets, scale X
     Args:
-        X_jets: ndarray [n_ev, n_jet_feat] containing jet related branches
-        X_photons: ndarray [n_ev, n_photon_feat] containing photon related branches
-        X_muons: ndarray [n_ev, n_muon_feat] containing muon related branches
+        X: an OrderedDict containing the feature matrices for the different particle types, e.g.:
+           X = {
+                    "jet" : X_jet,
+                    "photon" : X_photon,
+                    "muon" : X_muon
+           }
+           where each X_<particle> is an ndarray of dimensions [n_ev, n_<particle>features]
         y: ndarray [n_ev, 1] containing the truth labels
-        w: ndarray [n_ev, 1] containing EventWeights
+        w: ndarray [n_ev, 1] containing the event weights
     Returns:
-        X_jets_train: ndarray [n_ev_train, n_jet_feat] containing the events of jet related branches allocated for training
-        X_jets_test: ndarray [n_ev_test, n_jet_feat] containing the events of jet related branches allocated for testing
-        X_photons_train: ndarray [n_ev_train, n_photon_feat] containing the events of photon related branches allocated for training
-        X_photons_test: ndarray [n_ev_test, n_photon_feat] containing the events of photon related branches allocated for testing
-        X_muons_train: ndarray [n_ev_train, n_muon_feat] containing the events of muon related branches allocated for training
-        X_muons_test: ndarray [n_ev_test, n_muon_feat] containing the events of muon related branches allocated for testing
-        Y_train: ndarray [n_ev_train, 1] containing the shuffled truth labels for training
-        Y_test: ndarray [n_ev_test, 1] containing the shuffled truth labels allocated for testing
-        W_train: ndarray [n_ev_train, 1] containing the shuffled EventWeights allocated for training
-        W_test: ndarray [n_ev_test, 1] containing the shuffled EventWeights allocated for testing
+        data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
+              data = {
+                "X_jet_train" : X_jet_train,
+                "X_jet_test" : X_jet_test,
+                "X_photon_train" : X_photon_train,
+                "X_photon_test" : X_photon_test,
+                "y_train" : y_train,
+                "y_test" : y_test,
+                "w_train" : w_train,
+                "w_test" : w_test
+              }
     '''
-    #shuffle events & split into testing and training sets
-    X_jets_train, X_jets_test, \
-    X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test, \
-    Y_train, Y_test, \
-    W_train, W_test = train_test_split(X_jets, X_photons, X_muons, y, w, test_size=0.4)
+    logger.info('Shuffling, splitting and scaling')
 
-    X_jets_train, X_jets_test = _scale(X_jets_train, X_jets_test)
-    X_photons_train, X_photons_test = _scale(X_photons_train, X_photons_test)
-    X_muons_train, X_muons_test = _scale(X_muons_train, X_muons_test)
+    data_tuple = train_test_split(*(X.values() + [y, w]), test_size=0.4)
 
-    return X_jets_train, X_jets_test, X_photons_train, X_photons_test, X_muons_train, X_muons_test, Y_train, Y_test, W_train, W_test
+    data = OrderedDict()
+    for particle, (train, test) in zip(X.keys(), _pairwise(data_tuple[:(2 * len(X))])):
+        data['X_' + particle + '_train'], data['X_' + particle+ '_test'] = _scale(train, test)
 
-
-def zero_padding(X, max_length):
-    '''
-
-    '''
-    data = -999 * np.ones((X.shape[0], max_length, X.shape[1]), dtype='float32')
-    for i, row in enumerate(X):
-        data[i, :min(len(row[0]), max_length), :] = np.array(row.tolist()).T[:min(len(row[0]), max_length), :]
+    data['y_train'], data['y_test'], data['w_train'], data['w_test'] = data_tuple[-4:]
 
     return data
+
+
+def padding(X, max_length, value=-999):
+    '''
+    Transforms X to a 3D array where the dimensions correspond to [n_ev, n_particles, n_features].
+    n_particles is now fixed and equal to max_length.
+    If the number of particles in an event was < max_length, the missing particles will be filled with default values
+    If the number of particles in an event was > max_length, the excess particles will be removed
+    Args:
+        X: ndarray [n_ev, n_features] with an arbitrary number of particles per event
+        max_length: int, the number of particles to keep per event 
+        value (optional): the value to input in case there are not enough particles in the event, default=-999
+    Returns:
+        X_pad: ndarray [n_ev, n_particles, n_features], padded version of X with fixed number of particles
+    Note: 
+        Use Masking to avoid the particles with artificial entries = -999
+    '''
+    X_pad = value * np.ones((X.shape[0], max_length, X.shape[1]), dtype='float32')
+    for i, row in enumerate(X):
+        X_pad[i, :min(len(row[0]), max_length), :] = np.array(row.tolist()).T[:min(len(row[0]), max_length), :]
+
+    return X_pad
