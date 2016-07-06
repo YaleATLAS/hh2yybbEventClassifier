@@ -107,3 +107,23 @@ def plot_inputs(data, particle_names):
 			data['LabelEncoder'],
 			particle
 			)
+def plot_NN(yhat, y_test, w_test):
+	matplotlib.rcParams.update({'font.size': 16})
+	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+	bins = np.linspace(0,1,30)
+	for k in range(len(np.unique(y_test))):
+			color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
+			for j in range (len(np.unique(y_test))):
+				c = next(color)
+				_ = plt.hist(yhat[:,k][y_test==j], 
+				bins=bins, 
+				histtype='step', 
+				normed=True, 
+				label='Y=' + str(j),
+				weights=w_test[y_test == j],
+				color=c, 
+				linewidth=1)
+			plt.xlabel('Probabilty of Y=' +str(k)) # extract names from data processing, for loop that goes through all classes next color, predict probability that y equals class that we want
+			plt.ylabel('Weighted Normalized Number of Events')
+			plt.legend()
+			plt.show()
