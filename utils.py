@@ -11,12 +11,20 @@ def configure_logging():
     logging.addLevelName(logging.DEBUG, "\033[1;34m{:8}\033[1;0m".format(logging.getLevelName(logging.DEBUG)))
 
 def load_config(config_file):
-	# TO DO: make sure that particle names don't have underscores in them
+	# TO DO: validate types of entries in the config
 	config = json.load(open(config_file, 'r'))
 	required_keys = ['classes', 'particles']
+	required_particle_keys = ['branches', 'max_length']
 
 	for k in required_keys:
 		if k not in config.keys():
-			raise KeyError('pipeline configuration requires key: {}'.format(k))
+			raise KeyError('Pipeline configuration requires key: {}'.format(k))
+
+	for particle_name, particle_info in config['particles'].iteritems():
+		if '_' in particle_name:
+			raise ValueError('Particle names cannot have _ in them')
+		for k in required_particle_keys:
+			if k not in particle_info.keys():
+				raise KeyError('Particle configuration requires key: {}'.format(k))
 
 	return config
