@@ -2,6 +2,9 @@ from keras.models import Sequential
 from keras.layers.core import Activation, Dense, Dropout
 from keras.layers import Masking, GRU, Merge, Input, merge
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 def train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train):
 	jet_channel = Sequential()
@@ -26,7 +29,7 @@ def train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train):
 	combined_rnn.add(Dropout(0.3))
 	combined_rnn.add(Dense(3, activation='relu'))
 	combined_rnn.add(Dropout(0.3))
-	combined_rnn.add(Dense(1, activation='softmax'))
+	combined_rnn.add(Dense(2, activation='softmax'))
 
 	combined_rnn.compile('adam', 'sparse_categorical_crossentropy')
 
@@ -46,3 +49,19 @@ def train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train):
 
 	except KeyboardInterrupt:
 		print 'Training ended early.'
+
+	return combined_rnn
+
+def test(net, X_jets_test, X_photons_test, X_muons_test, y_test, w_test):
+	print y_test.shape
+	print w_test.shape
+
+	yhat_rnn = net.predict([X_jets_test, X_photons_test], verbose = True, batch_size = 512) 
+	bins = np.linspace(0,2,3)
+	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+	
+	_ = plt.hist(np.argmax(yhat_rnn, axis=1), bins=bins, histtype='stepfilled', alpha=0.5, label='prediction', weights=w_test)
+	_ = plt.hist(y_test, bins=bins, histtype='stepfilled', alpha=0.5, label='truth', weights=w_test)
+	plt.legend(loc='upper left')
+	plt.show()
+	plt.savefig('yay.pdf')
