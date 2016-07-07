@@ -1,0 +1,14 @@
+{
+    "ttbar" :
+    [
+        "~/jenny/ttbar.root"
+    ],
+    "qcd" :
+    [
+        "~/jenny/qcd.root"
+    ],
+    "wjets" :
+    [
+        "~/jenny/wjets.root"
+    ]
+}

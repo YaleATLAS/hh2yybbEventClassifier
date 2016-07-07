@@ -6,7 +6,12 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-def train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train):
+def train(data):
+
+	X_jets_train = data['X_jets_train']
+	X_photons_train = data['X_photons_train']
+	y_train = data ['y_train']
+
 	jet_channel = Sequential()
 	photon_channel = Sequential()
 
@@ -52,9 +57,9 @@ def train(X_jets_train, X_photons_train, X_muons_train, y_train, w_train):
 
 	return combined_rnn
 
-def test(net, X_jets_test, X_photons_test, X_muons_test, y_test, w_test):
-	print y_test.shape
-	print w_test.shape
+def test(net, data):
+	X_jets_test = data['X_jets_test']
+	X_photons_test = data['X_photons_test']
 
 	yhat_rnn = net.predict([X_jets_test, X_photons_test], verbose = True, batch_size = 512) 
 	

@@ -1,0 +1,10 @@
+{
+    "ttbar" :
+    [
+        "/home/ubuntu/jenny/ttbar.root"
+    ],
+    "qcd" :
+    [
+        "/home/ubuntu/jenny/qcd.root"
+    ]
+}

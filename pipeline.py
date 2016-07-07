@@ -101,11 +101,11 @@ def main(json_config, tree_name):
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    # net = train(data)
+    net = train(data)
 
     # # -- test
     # # evaluate performance on the test set
-    # yhat = test(net, data)
+    yhat = test(net, data)
 
     # # -- plot performance
     # # produce ROC curves to evaluate performance
