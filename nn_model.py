@@ -57,11 +57,5 @@ def test(net, X_jets_test, X_photons_test, X_muons_test, y_test, w_test):
 	print w_test.shape
 
 	yhat_rnn = net.predict([X_jets_test, X_photons_test], verbose = True, batch_size = 512) 
-	bins = np.linspace(0,2,3)
-	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
 	
-	_ = plt.hist(np.argmax(yhat_rnn, axis=1), bins=bins, histtype='stepfilled', alpha=0.5, label='prediction', weights=w_test)
-	_ = plt.hist(y_test, bins=bins, histtype='stepfilled', alpha=0.5, label='truth', weights=w_test)
-	plt.legend(loc='upper left')
-	plt.show()
-	plt.savefig('yay.pdf')
+	return yhat_rnn
