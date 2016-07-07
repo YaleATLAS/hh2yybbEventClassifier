@@ -5,8 +5,9 @@ import cPickle
 from plotting import plot_inputs
 import utils
 import logging
-from neural_network import NN_train, NN_test
+from nn_combined import NN_train, NN_test
 import deepdish.io as io
+from plotting import plot_NN
 #from plotting import plot_inputs, plot_performance
 
 #from nn_model import train, test
@@ -67,8 +68,8 @@ def main(json_config, tree_name):
         X, y, w, le = read_in(class_files_dict, tree_name, particles_dict)
 
         # -- shuffle, split samples into train and test set, scale features
-        data = shuffle_split_scale(X, y, w) 
-  
+        data = shuffle_split_scale(X, y, w)  
+
         data.update({
             'varlist' : [
                 branch 
@@ -77,7 +78,6 @@ def main(json_config, tree_name):
             ],
             'LabelEncoder' : le
         })
-
         # -- plot distributions:
         '''
         This should produce normed, weighted histograms of the input distributions for all variables
@@ -103,16 +103,10 @@ def main(json_config, tree_name):
     # # design a Keras NN with three RNN streams (jets, photons, muons)
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
-    io.save(('X_jets_NN.h5'), NN(X_jets_train, X_jets_test, y_train))
-    X_jets_NN_h5 = io.load('X_jets_NN.h5')
-    io.save(('X_photons_NN.h5'), NN(X_photons_train, X_photons_test, y_train))
-    X_photons_NN_h5 = io.load('X_photons_NN.h5')
-    io.save(('X_muons_NN.h5'), NN(X_muons_train, X_muons_test, y_train))
-    X_muons_NN_h5 = io.load('X_muons_NN.h5')
+    #io.save(('data_NN.h5'), NN_train(data))
+    #data_NN_h5 = io.load('data_NN.h5')
   
-    plot_NN(NN_test(X_jets_test, NN_train(X_jets_train, y_train)), y_test, w_test)
-    plot_NN(NN_test(X_photons_test, NN_train(X_photons_train, y_train)), y_test, w_test)
-    plot_NN(NN_test(X_muons_test, NN_train(X_muons_train, y_train)), y_test, w_test)
+    plot_NN(NN_test(NN_train(data), data), data)
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml

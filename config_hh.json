@@ -3,31 +3,31 @@
     {
     	"X400" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X400tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_X400tohh_yybb.root"
         ],
     	"X350" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X350tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_X350tohh_yybb.root"
         ],
     	"X325" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X325tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_X325tohh_yybb.root"
         ],
         "H300" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_H300_Xtohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_H300_Xtohh_yybb.root"
         ],
         "X275" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X275tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_X275tohh_yybb.root"
         ],
         "bkg" :
         [
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_ybbj.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_ybjj.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_yjjj.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_yybb.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_yybj.root"
+        	"/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_ybbj.root",
+        	"/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_ybjj.root",
+        	"/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_yjjj.root",
+        	"/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_yybb.root",
+        	"/Users/gigifstark/CERN_Work/HH2YBB/N_Tuples/MGPy8_yybj.root"
         ]
     },
 

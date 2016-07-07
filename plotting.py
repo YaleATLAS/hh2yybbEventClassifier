@@ -107,7 +107,9 @@ def plot_inputs(data, particle_names):
 			data['LabelEncoder'],
 			particle
 			)
-def plot_NN(yhat, y_test, w_test):
+def plot_NN(yhat, data):
+	y_test=data['y_test']
+	w_test=data['w_test']
 	matplotlib.rcParams.update({'font.size': 16})
 	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
 	bins = np.linspace(0,1,30)
