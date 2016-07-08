@@ -108,6 +108,13 @@ def plot_inputs(data, particle_names):
 			particle
 			)
 def plot_NN(yhat, data):
+	'''
+    Args:
+        yhat: an ndarray of the probability of each event for each class
+        data: dictionary containing relevant data
+     Returns:
+     	a plot of the probability that each event in a known classes is predicted to be in a specific class
+    '''
 	y_test=data['y_test']
 	w_test=data['w_test']
 	matplotlib.rcParams.update({'font.size': 16})

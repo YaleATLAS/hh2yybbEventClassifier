@@ -103,10 +103,10 @@ def main(json_config, tree_name):
     # # design a Keras NN with three RNN streams (jets, photons, muons)
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
-    #io.save(('data_NN.h5'), NN_train(data))
-    #data_NN_h5 = io.load('data_NN.h5')
   
-    plot_NN(NN_test(NN_train(data), data), data)
+    net=NN_train(data)
+    yhat=NN_test(net, data)
+    plot_NN(yhat, data)
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
