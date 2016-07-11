@@ -9,20 +9,14 @@ Event level classifier for the hh-->yybb analysis using multi-stream RNNs
 ### Current Status:
 ![Pipeline](images/UGsWorkflow.png)
 
+### Deep Learning Module:
+![Net](images/MultiStreamRNN.png)
+Our goal is to train an event-level classifier, in order to be able to distinguish di-Higgs resonant decays from photons+jets backgrounds. To describe an event, we combine the pre-calculated event-level information with a series of RNN streams that extract information about the event from the properties of the different types of particles in it (jets, electrons, photons, muons, ...).
+
+We phrase our project both as a classification and a regression. In the classification task, we consider every mass hypothesis for the di-Higgs parent particle as a separate class, and we attempt to solve a multi-class classification problem. In the regression task, we use the nominal mass of the parent particle as the continuous variable to predict.
+
 ### To-do list:
- 
-* Produce the ntuples using `HGamAnalysisFramework`:  
-     Decide what info to include (jets and photons, but also leptons, pileup info?)   
-     Apply the pre-selection </br>
-     Assign truth labels using b-quark-from-Higgs labeling scheme </br>
-     Actually make the ntuples on grid – run on signal and bkg events
- 
-* Analysis Coding Tasks -- Modules needed: 
-   1. Training module that uses `Keras` (design RNN, test different NN architectures, etc.) 
-   ![Net](images/MultiStreamRNN.png)
-   2. Testing module to check performance and produce ROC curves. Plot ROC curve as a function of mu (pile-up), pt of largest jet, Njets, etc. 
-  
-* Write presentations
+ 1. Testing module to check performance and produce ROC curves. Plot ROC curve as a function of mu (pile-up), pt of largest jet, Njets, etc. 
 
 ---
 This project has been assigned to [@gstark12](https://github.com/gstark12) and [@jennyailin](https://github.com/jennyailin) as part of their Summer 2016 internship at CERN. They will work under the supervision of [@mickypaganini](https://github.com/mickypaganini) and Prof. Paul Tipton.
