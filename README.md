@@ -4,7 +4,7 @@ Event level classifier for the hh-->yybb analysis using multi-stream RNNs
 ## RNN-based Event Level Classifier for ATLAS Analysis (hh-->yybb) 
  
 ### Purpose: 
-ATLAS has a ‘cut based’ hh data analysis. To improve on this, a ML algoorithm is being trained to select the correct “second b jet” in single-tagged events ([bbyy jet classifier](https://github.com/jemrobinson/bbyy_jet_classifier)). The project proposed here will take this a step further and develop an event-level tagger to distinguish di-Higgs events from various background sources. In the resonant analysis, we will use regression to determine the most likely mass of the resonance. 
+'Cut-based' methods are the prevalent data analysis strategy in ATLAS, which is also currently being used in the hh-->yybb analysis group. To improve on this, a ML algorithm is being trained to select the correct “second b jet” in single-tagged events ([bbyy jet classifier](https://github.com/jemrobinson/bbyy_jet_classifier)). The project in this repo will take this a step further and develop an event classifier. 
  
 ### Current Status:
 ![Pipeline](images/UGsWorkflow.png)
@@ -19,6 +19,7 @@ ATLAS has a ‘cut based’ hh data analysis. To improve on this, a ML algoorith
  
 * Analysis Coding Tasks -- Modules needed: 
    1. Training module that uses `Keras` (design RNN, test different NN architectures, etc.) 
+   ![Net](images/MultiStreamRNN.png)
    2. Testing module to check performance and produce ROC curves. Plot ROC curve as a function of mu (pile-up), pt of largest jet, Njets, etc. 
   
 * Write presentations
