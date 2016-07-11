@@ -132,7 +132,7 @@ def plot_NN(yhat, data):
 				weights=w_test[y_test == j],
 				color=c, 
 				linewidth=1)
-			plt.xlabel('Probabilty of Y=' +str(k)) # extract names from data processing, for loop that goes through all classes next color, predict probability that y equals class that we want
+			plt.xlabel('Probabilty of Y=' +str(k)) 
 			plt.ylabel('Weighted Normalized Number of Events')
 			plt.legend()
 			plt.show()

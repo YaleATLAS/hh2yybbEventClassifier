@@ -68,9 +68,8 @@ def NN_train(data):
         print 'Training ended early.'
 
     #saving the combined recurrent neural network
-    ts = time.time()
-    st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-    combined_rnn.save_weights('TestModel.H5'+st)
+    setType=raw_input("What set is this?")
+    combined_rnn.save_weights('TestModel'+setType+'.H5')
     combined_rnn_json=combined_rnn.to_json()
     open('TestModel.json','w').write(combined_rnn_json)
 

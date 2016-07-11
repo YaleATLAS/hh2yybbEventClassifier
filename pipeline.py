@@ -104,19 +104,18 @@ def main(json_config, tree_name):
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
   
-    net=NN_train(data)
-    yhat=NN_test(net, data)
-    plot_NN(yhat, data)
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    # net = train(data)
-
+    net=NN_train(data)
+   
     # # -- test
     # # evaluate performance on the test set
-    # yhat = test(net, data)
+    yhat=NN_test(net, data)
 
     # # -- plot performance
+    plot_NN(yhat, data)
+
     # # produce ROC curves to evaluate performance
     # # save them out to pdf
     # plot_performance(yhat, data['y_test'], data['w_test'])
