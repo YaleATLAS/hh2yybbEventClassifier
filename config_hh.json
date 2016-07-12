@@ -62,6 +62,19 @@
                     "photon_topoEtcone40"
                 ],
             "max_length" : 3
+        },
+
+        "event":
+        {
+            "branches" :
+                [
+                    "jet_n",
+                    "met",
+                    "met_phi",
+                    "met_sumet",
+                    "photon_n"
+                ],
+            "max_length" : 1
         }
     }
 }
