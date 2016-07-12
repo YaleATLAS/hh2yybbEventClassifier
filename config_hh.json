@@ -3,31 +3,31 @@
     {
     	"X400" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X400tohh_yybb.root"
+            "/home/ubuntu/jenny/n_tuples/MGPy8_X400tohh_yybb.root"
         ],
     	"X350" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X350tohh_yybb.root"
+            "/home/ubuntu/jenny/n_tuples/MGPy8_X350tohh_yybb.root"
         ],
     	"X325" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X325tohh_yybb.root"
+            "/home/ubuntu/jenny/n_tuples/MGPy8_X325tohh_yybb.root"
         ],
         "H300" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_H300_Xtohh_yybb.root"
+            "/home/ubuntu/jenny/n_tuples/MGPy8_H300_Xtohh_yybb.root"
         ],
         "X275" :
         [
-            "/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_X275tohh_yybb.root"
+            "/home/ubuntu/jenny/n_tuples/MGPy8_X275tohh_yybb.root"
         ],
         "bkg" :
         [
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_ybbj.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_ybjj.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_yjjj.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_yybb.root",
-        	"/Users/mp744/Documents/CERN/hh2yybb/hh2yybbEventClassifier/ntuples/MGPy8_yybj.root"
+        	"/home/ubuntu/jenny/n_tuples/MGPy8_ybbj.root",
+        	"/home/ubuntu/jenny/n_tuples/MGPy8_ybjj.root",
+        	"/home/ubuntu/jenny/n_tuples/MGPy8_yjjj.root",
+        	"/home/ubuntu/jenny/n_tuples/MGPy8_yybb.root",
+        	"/home/ubuntu/jenny/n_tuples/MGPy8_yybj.root"
         ]
     },
 
