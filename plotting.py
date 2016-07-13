@@ -140,7 +140,7 @@ def plot_NN(yhat, data):
 		plt.xlabel('Probabilty of Y=' +str(k)) 
 		plt.ylabel('Weighted Normalized Number of Events')
 		plt.legend()
-		plt.savefig('/Users/gigifstark/CERN_Work/HH2YBB')
+		plt.savefig('/Users/gigifstark/CERN_Work/HH2YYBB')
 
 def plot_roc_Curve(yhat, data, le, model_name):
 	'''
@@ -170,6 +170,6 @@ def plot_roc_Curve(yhat, data, le, model_name):
 		print 'Plotting'
 		fig=ROC_plotter(curves_dictionary, model_name, title=le.inverse_transform(k), min_eff = 0.1, max_eff=1.0, logscale=True)
 		plt.ylim([0,100])
-		fig.savefig('/Users/gigifstark/CERN_Work/HH2YBB/roc'+ str(k)+'.pdf')
-	cPickle.dump(pkl_dict, open(trial+"_pkl", 'wb'))
+		fig.savefig('/Users/gigifstark/CERN_Work/HH2YYBB/roc'+ str(k)+'.pdf')
+	cPickle.dump(pkl_dict, open(model_name+"_pkl", 'wb'))
 

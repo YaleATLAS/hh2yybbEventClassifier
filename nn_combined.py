@@ -56,15 +56,15 @@ def NN_train(data, model_name):
     print 'Training:'
     try:
         combined_rnn.fit([X_jets_train, X_photons_train], 
-            y_train, batch_size=100, class_weight={
+            y_train, batch_size=16, class_weight={
                 k : (float(len(y_train)) / float(len(np.unique(y_train)) * (len(y_train[y_train == k])))) for k in np.unique(y_train)
             },
             callbacks = [
-                EarlyStopping(verbose=True, patience=10, monitor='val_loss'),
+                EarlyStopping(verbose=True, patience=20, monitor='val_loss'),
                 ModelCheckpoint('./models/combinedrnn-progress',
                 monitor='val_loss', verbose=True, save_best_only=True)
             ],
-            nb_epoch=1, validation_split = 0.2) 
+            nb_epoch=100, validation_split = 0.2) 
 
     except KeyboardInterrupt:
         print 'Training ended early.'
