@@ -11,6 +11,8 @@ from plotting import plot_NN, plot_roc_Curve
 #from plotting import plot_inputs, plot_performance
 
 #from nn_model import train, test
+#from nn_model import train, test
+#from functional_nn import train, test
 
 def main(json_config, model_name, tree_name):
     '''
@@ -85,11 +87,11 @@ def main(json_config, model_name, tree_name):
         Plots should be saved out a pdf with informative names
         '''
         logger.info('Saving input distributions in ./plots/')
-        plot_inputs(data, particles_dict.keys())
+        plot_inputs(data, particles_dict)
 
         logger.info('Padding')
         for key in data:
-            if key.startswith('X_'):
+            if ((key.startswith('X_')) and ('event' not in key)): # no padding for `event` matrix
                 data[key] = padding(data[key], particles_dict[key.split('_')[1]]['max_length']) 
                 # ^ assuming naming convention: X_<particle>_train, X_<particle>_test 
 
@@ -110,6 +112,7 @@ def main(json_config, model_name, tree_name):
     # # -- test
     # # evaluate performance on the test set
     yhat=NN_test(net, data)
+  
 
     # # -- plot performance
     #plot_NN(yhat, data)
