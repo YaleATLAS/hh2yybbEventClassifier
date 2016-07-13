@@ -1,30 +1,22 @@
 # hh2yybb Event Classifier
 Event level classifier for the hh-->yybb analysis using multi-stream RNNs
 
-## Project Title: Develop a ML algorithm to distinguish SM hh (gamma-gamma bb) events from background 
+## RNN-based Event Level Classifier for ATLAS Analysis (hh-->yybb) 
  
 ### Purpose: 
-ATLAS has a ‘cut based’ hh data analysis. To improve on this, a ML algoorithm is being trained to select the correct “second b jet” in single-tagged events ([bbyy jet classifier](https://github.com/jemrobinson/bbyy_jet_classifier)). The project proposed here will take this a step further and develop an algorithm for all events passing some minimum selection criteria, not just single-tagged events. 
+'Cut-based' methods are the prevalent data analysis strategy in ATLAS, which is also currently being used in the hh-->yybb analysis group. To improve on this, a ML algorithm is being trained to select the correct “second b jet” in single-tagged events ([bbyy jet classifier](https://github.com/jemrobinson/bbyy_jet_classifier)). The project in this repo will take this a step further and develop an event classifier. 
  
+### Current Status:
+![Pipeline](images/UGsWorkflow.png)
+
+### Deep Learning Module:
+![Net](images/MultiStreamRNN.png)
+Our goal is to train an event-level classifier, in order to be able to distinguish di-Higgs resonant decays from photons+jets backgrounds. To describe an event, we combine the pre-calculated event-level information with a series of RNN streams that extract information about the event from the properties of the different types of particles in it (jets, electrons, photons, muons, ...).
+
+We phrase our project both as a classification and a regression. In the classification task, we consider every mass hypothesis for the di-Higgs parent particle as a separate class, and we attempt to solve a multi-class classification problem. In the regression task, we use the nominal mass of the parent particle as the continuous variable to predict.
+
 ### To-do list:
- 
-* Produce the ntuples using `HGamAnalysisFramework`:  
-     Decide what info to include (jets and photons, but also leptons, pileup info?)   
-     Apply the pre-selection </br>
-     Assign truth labels using b-quark-from-Higgs labeling scheme </br>
-     Actually make the ntuples on grid – run on signal and bkg events
- 
-* Analysis Coding Tasks -- Modules needed: 
-   1. Read-in module that knows about the ntuple format 
-   2. Data processing module that uses `scikit-learn` to: </br>
-      scale all variables to have mean zero and sd of 1 </br>
-      shuffle events  </br>
-      split data into training and testing samples 
-   3. Plotting module to check all variables before training, both scaled and pre-scaled variables to make sure things look reasonable and there are no bugs 
-   4. Training module that uses `Keras` (design RNN, test different NN architectures, etc.) 
-   5. Testing module to check performance and produce ROC curves. Plot ROC curve as a function of mu (pile-up), pt of largest jet, Njets, etc. 
-  
-* Write presentations
+ 1. Testing module to check performance and produce ROC curves. Plot ROC curve as a function of mu (pile-up), pt of largest jet, Njets, etc. 
 
 ---
 This project has been assigned to [@gstark12](https://github.com/gstark12) and [@jennyailin](https://github.com/jennyailin) as part of their Summer 2016 internship at CERN. They will work under the supervision of [@mickypaganini](https://github.com/mickypaganini) and Prof. Paul Tipton.
