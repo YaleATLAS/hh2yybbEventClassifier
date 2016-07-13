@@ -5,6 +5,7 @@ from matplotlib.pyplot import cm
 import pandautils as pup
 import os
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix
 
 def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particles_dict):
 	'''
@@ -112,3 +113,42 @@ def plot_inputs(data, particles_dict):
 			particle,
 			particles_dict
 			)
+
+def plot_confusion(yhat, data):
+	'''
+	Args:
+		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
+		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
+              data = {
+                "X_jet_train" : X_jet_train,
+                "X_jet_test" : X_jet_test,
+                "X_photon_train" : X_photon_train,
+                "X_photon_test" : X_photon_test,
+                "y_train" : y_train,
+                "y_test" : y_test,
+                "w_train" : w_train,
+                "w_test" : w_test
+              }
+	Returns:
+		Saves confusion.pdf confusion matrix
+	'''
+	
+	y_test = data['y_test']
+
+	def _plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
+	    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+	    plt.title(title)
+	    plt.colorbar()
+	    tick_marks = np.arange(len(np.unique(y_test)))
+	    plt.xticks(tick_marks, sorted(np.unique(y_test)))
+	    plt.yticks(tick_marks, sorted(np.unique(y_test)))
+	    plt.tight_layout()
+	    plt.ylabel('True label')
+	    plt.xlabel('Predicted label')
+
+	cm = confusion_matrix(y_test, np.argmax(yhat, axis=1))
+	# Normalize the confusion matrix by row (i.e by the number of samples
+	# in each class)
+	cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+	_plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
+	plt.savefig('confusion.pdf')
