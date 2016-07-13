@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import datetime
 import time
 
-def NN_train(data):
+def NN_train(data, model_name):
     '''
     Args:
         data: dictionary containing relevant data
@@ -41,6 +41,8 @@ def NN_train(data):
     #combining the jet and photon classes to make a combined recurrent neural network
     combined_rnn = Sequential()
     combined_rnn.add(Merge([jet_channel, photon_channel], mode='concat'))
+    combined_rnn.add(Dense(72, activation='relu'))
+    combined_rnn.add(Dropout(0.3))   
     combined_rnn.add(Dense(36, activation='relu'))
     combined_rnn.add(Dropout(0.3))
     combined_rnn.add(Dense(24, activation='relu'))
@@ -54,7 +56,7 @@ def NN_train(data):
     print 'Training:'
     try:
         combined_rnn.fit([X_jets_train, X_photons_train], 
-            y_train, batch_size=16, class_weight={
+            y_train, batch_size=100, class_weight={
                 k : (float(len(y_train)) / float(len(np.unique(y_train)) * (len(y_train[y_train == k])))) for k in np.unique(y_train)
             },
             callbacks = [
@@ -68,8 +70,7 @@ def NN_train(data):
         print 'Training ended early.'
 
     #saving the combined recurrent neural network
-    setType=raw_input("What set is this?")
-    combined_rnn.save_weights('TestModel'+setType+'.H5')
+    combined_rnn.save_weights('TestModel_'+model_name+'.H5')
     combined_rnn_json=combined_rnn.to_json()
     open('TestModel.json','w').write(combined_rnn_json)
 
@@ -88,9 +89,6 @@ def NN_test(net, data):
     X_photons_test=data['X_photon_test']
     y_test=data['y_test']
     w_test=data['w_test']
-
-    print y_test.shape
-    print w_test.shape
 
     yhat_rnn = net.predict([X_jets_test, X_photons_test], verbose = True, batch_size = 512) 
     

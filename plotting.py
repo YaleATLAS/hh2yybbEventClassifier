@@ -5,6 +5,8 @@ from matplotlib.pyplot import cm
 import pandautils as pup
 import os
 from sklearn.preprocessing import LabelEncoder
+from viz import calculate_roc, ROC_plotter, add_curve
+import cPickle 
 
 def _plot_X(train, test, y_train, y_test, w_train, w_test, varlist, le, feature):
 	'''
@@ -120,19 +122,54 @@ def plot_NN(yhat, data):
 	matplotlib.rcParams.update({'font.size': 16})
 	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
 	bins = np.linspace(0,1,30)
+	#find probability of each class 
 	for k in range(len(np.unique(y_test))):
-			color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
-			for j in range (len(np.unique(y_test))):
-				c = next(color)
-				_ = plt.hist(yhat[:,k][y_test==j], 
-				bins=bins, 
-				histtype='step', 
-				normed=True, 
-				label='Y=' + str(j),
-				weights=w_test[y_test == j],
-				color=c, 
-				linewidth=1)
-			plt.xlabel('Probabilty of Y=' +str(k)) 
-			plt.ylabel('Weighted Normalized Number of Events')
-			plt.legend()
-			plt.show()
+		print k
+		color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
+		#find the truth label for each class
+		for j in range (len(np.unique(y_test))):
+			c = next(color)
+			_ = plt.hist(yhat[:,k][y_test==j], 
+			bins=bins, 
+			histtype='step', 
+			normed=True, 
+			label='Y=' + str(j),
+			weights=w_test[y_test == j],
+			color=c, 
+			linewidth=1)
+		plt.xlabel('Probabilty of Y=' +str(k)) 
+		plt.ylabel('Weighted Normalized Number of Events')
+		plt.legend()
+		plt.savefig('/Users/gigifstark/CERN_Work/HH2YBB')
+
+def plot_roc_Curve(yhat, data, le, model_name):
+	'''
+    Args:
+        yhat: an ndarray of the probability of each event for each class
+        data: dictionary containing relevant data
+    Returns:
+		plot: MatLibPlot for each particle with different mass compared to background
+		pickle file: pkl file dictionary with each curve
+    '''
+	y_test=data['y_test']
+	w_test=data['w_test']
+	pkl_dict={}
+	for k in range(0, len(np.unique(y_test))-1):
+		sig_back= (y_test==k)|(y_test==5)
+		y=np.log(yhat[sig_back][:,k]/yhat[sig_back][:,5])
+		finite= np.isfinite(y)
+		curves_dictionary=add_curve ("Y="+str(k), 'blue', 
+			calculate_roc(
+				y_test[sig_back][finite], 
+				np.log(yhat[sig_back][finite][:,k]/yhat[sig_back][finite][:,5]), 
+				pos_label=k, 
+				weights=w_test[sig_back][finite]
+			)
+			)
+		pkl_dict.update(curves_dictionary)
+		print 'Plotting'
+		fig=ROC_plotter(curves_dictionary, model_name, title=le.inverse_transform(k), min_eff = 0.1, max_eff=1.0, logscale=True)
+		plt.ylim([0,100])
+		fig.savefig('/Users/gigifstark/CERN_Work/HH2YBB/roc'+ str(k)+'.pdf')
+	cPickle.dump(pkl_dict, open(trial+"_pkl", 'wb'))
+

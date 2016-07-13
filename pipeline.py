@@ -7,12 +7,12 @@ import utils
 import logging
 from nn_combined import NN_train, NN_test
 import deepdish.io as io
-from plotting import plot_NN
+from plotting import plot_NN, plot_roc_Curve
 #from plotting import plot_inputs, plot_performance
 
 #from nn_model import train, test
 
-def main(json_config, tree_name):
+def main(json_config, model_name, tree_name):
     '''
     Args:
     -----
@@ -59,7 +59,7 @@ def main(json_config, tree_name):
     try:
         logger.info('Attempting to read from {}'.format(pickle_name))
         data = cPickle.load(open(pickle_name, 'rb'))
-        logger.info('Pre-processed data found and loaded from pickle')
+        logger.info('Pre-processed data found and loaded from pickle') 
     # -- otherwise, process the new data 
     except IOError:
         logger.info('Pre-processed data not found in {}'.format(pickle_name))
@@ -101,22 +101,21 @@ def main(json_config, tree_name):
 
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
-    # # -- train
-    # # design a Keras NN with three RNN streams (jets, photons, muons)
-  
+    le=data['LabelEncoder']
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    net=NN_train(data)
+    net=NN_train(data, model_name)
    
     # # -- test
     # # evaluate performance on the test set
     yhat=NN_test(net, data)
 
     # # -- plot performance
-    plot_NN(yhat, data)
+    #plot_NN(yhat, data)
 
     # # produce ROC curves to evaluate performance
+    plot_roc_Curve(yhat, data, le, model_name)
     # # save them out to pdf
     # plot_performance(yhat, data['y_test'], data['w_test'])
 
@@ -130,8 +129,9 @@ if __name__ == '__main__':
     # -- read in arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
+    parser.add_argument('model_name', help="name of the set from particular network")
     parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
     args = parser.parse_args()
 
     # -- pass arguments to main
-    sys.exit(main(args.config, args.tree))
+    sys.exit(main(args.config, args.model_name, args.tree))
