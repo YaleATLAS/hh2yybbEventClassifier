@@ -2,18 +2,13 @@ import json
 from data_processing import read_in, shuffle_split_scale, padding
 import pandautils as pup
 import cPickle
-from plotting import plot_inputs, plot_NN
+from plotting import plot_inputs, plot_NN_class_placement_probability, save_roc_curves
 import utils
 import logging
-from nn_combined import NN_train, NN_test
-import deepdish.io as io
-from plotting import plot_NN, plot_roc_Curve
+from nn_combined import NN_train
 import deepdish.io as io
 #from plotting import plot_inputs, plot_performance
 
-#from nn_model import train, test
-#from nn_model import train, test
-#from functional_nn import train, test
 
 def main(json_config, model_name, tree_name):
     '''
@@ -103,75 +98,11 @@ def main(json_config, model_name, tree_name):
             protocol=cPickle.HIGHEST_PROTOCOL)
 
     # -- plot distributions:
-    '''
-    This should produce normed, weighted histograms of the input distributions for all variables
-    The train and test distributions should be shown for every class
-    Plots should be saved out a pdf with informative names
-    
-    logger.info('Plotting input distributions')
-    plot_inputs(
-        X_jets_train, X_jets_test, 
-        X_photons_train, X_photons_test, 
-        X_muons_train, X_muons_test, 
-        y_train, y_test, 
-        w_train, w_test,
-        varlist 
-        )
-    '''
-    X_jets_train, X_jets_test, \
-    X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test = map(zero_padding, 
-        [
-            X_jets_train, X_jets_test, 
-            X_photons_train, X_photons_test, 
-            X_muons_train, X_muons_test
-        ],
-        [5, 5, 3, 3, 2, 2]
-    )
-
-    # -- plot distributions:
-    '''
-    This should produce normed, weighted histograms of the input distributions for all variables
-    The train and test distributions should be shown for every class
-    Plots should be saved out a pdf with informative names
-    '''
-    logger.info('Plotting input distributions')
-    plot_inputs(
-        X_jets_train, X_jets_test, 
-        X_photons_train, X_photons_test, 
-        X_muons_train, X_muons_test, 
-        y_train, y_test, 
-        w_train, w_test,
-        varlist 
-        )
-
-    X_jets_train, X_jets_test, \
-    X_photons_train, X_photons_test, \
-    X_muons_train, X_muons_test = map(zero_padding, 
-        [
-            X_jets_train, X_jets_test, 
-            X_photons_train, X_photons_test, 
-            X_muons_train, X_muons_test
-        ],
-        [5, 5, 3, 3, 2, 2]
-    )
-
-    print  X_jets_train.shape, X_photons_train.shape
 
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
     le=data['LabelEncoder']
 
-    io.save(('X_jets_NN.h5'), NN(X_jets_train, X_jets_test, y_train))
-    X_jets_NN_h5 = io.load('X_jets_NN.h5')
-    io.save(('X_photons_NN.h5'), NN(X_photons_train, X_photons_test, y_train))
-    X_photons_NN_h5 = io.load('X_photons_NN.h5')
-    io.save(('X_muons_NN.h5'), NN(X_muons_train, X_muons_test, y_train))
-    X_muons_NN_h5 = io.load('X_muons_NN.h5')
-  
-    plot_NN(NN_test(X_jets_test, NN_train(X_jets_train, y_train)), y_test, w_test)
-    plot_NN(NN_test(X_photons_test, NN_train(X_photons_train, y_train)), y_test, w_test)
-    plot_NN(NN_test(X_muons_test, NN_train(X_muons_train, y_train)), y_test, w_test)
 
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
@@ -180,13 +111,13 @@ def main(json_config, model_name, tree_name):
    
     # # -- test
     # # evaluate performance on the test set
-    yhat=NN_test(net, data)
+    yhat=net.predict([data['X_jet_test'], data['X_photon_test']], verbose = True, batch_size = 512) 
   
     # # -- plot performance
     #plot_NN(yhat, data)
 
     # # produce ROC curves to evaluate performance
-    plot_roc_Curve(yhat, data, le, model_name)
+    save_roc_curves(yhat, data, le, model_name)
     # # save them out to pdf
     # plot_performance(yhat, data['y_test'], data['w_test'])
 

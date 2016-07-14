@@ -56,15 +56,15 @@ def NN_train(data, model_name):
     print 'Training:'
     try:
         combined_rnn.fit([X_jets_train, X_photons_train], 
-            y_train, batch_size=16, class_weight={
+            y_train, batch_size=100, class_weight={
                 k : (float(len(y_train)) / float(len(np.unique(y_train)) * (len(y_train[y_train == k])))) for k in np.unique(y_train)
             },
             callbacks = [
                 EarlyStopping(verbose=True, patience=20, monitor='val_loss'),
-                ModelCheckpoint('./models/combinedrnn-progress',
+                ModelCheckpoint('./models/combinedrnn-progress'+model_name,
                 monitor='val_loss', verbose=True, save_best_only=True)
             ],
-            nb_epoch=100, validation_split = 0.2) 
+            nb_epoch=1, validation_split = 0.2) 
 
     except KeyboardInterrupt:
         print 'Training ended early.'
@@ -72,24 +72,6 @@ def NN_train(data, model_name):
     #saving the combined recurrent neural network
     combined_rnn.save_weights('TestModel_'+model_name+'.H5')
     combined_rnn_json=combined_rnn.to_json()
-    open('TestModel.json','w').write(combined_rnn_json)
+    open('TestModel'+model_name+'.json','w').write(combined_rnn_json)
 
     return combined_rnn
-
-
-def NN_test(net, data):
-    '''
-    Args:
-        net: a combined recurrent neural network
-        data: dictionary containing relevant data
-     Returns:
-        yhat: an ndarray of the probability of each event for each class
-    '''
-    X_jets_test=data['X_jet_test']
-    X_photons_test=data['X_photon_test']
-    y_test=data['y_test']
-    w_test=data['w_test']
-
-    yhat_rnn = net.predict([X_jets_test, X_photons_test], verbose = True, batch_size = 512) 
-    
-    return yhat_rnn

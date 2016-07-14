@@ -116,7 +116,7 @@ def plot_inputs(data, particles_dict):
 			particles_dict
 			)
 
-def plot_NN(yhat, data):
+def plot_NN_class_placement_probability(yhat, data):
 	'''
     Args:
         yhat: an ndarray of the probability of each event for each class
@@ -149,7 +149,7 @@ def plot_NN(yhat, data):
 		plt.legend()
 		plt.savefig('/Users/gigifstark/CERN_Work/HH2YYBB')
 
-def plot_roc_Curve(yhat, data, le, model_name):
+def save_roc_curves(yhat, data, le, model_name):
 	'''
     Args:
         yhat: an ndarray of the probability of each event for each class
@@ -174,11 +174,10 @@ def plot_roc_Curve(yhat, data, le, model_name):
 			)
 			)
 		pkl_dict.update(curves_dictionary)
-		print 'Plotting'
-		fig=ROC_plotter(curves_dictionary, model_name, title=le.inverse_transform(k), min_eff = 0.1, max_eff=1.0, logscale=True)
-		plt.ylim([0,100])
-		fig.savefig('/Users/gigifstark/CERN_Work/HH2YYBB/roc'+ str(k)+'.pdf')
-	cPickle.dump(pkl_dict, open(model_name+"_pkl", 'wb'))
+		print 'Plotting'+ " " + le.inverse_transform(k)
+		fig=ROC_plotter(curves_dictionary, model_name, title=le.inverse_transform(k), min_eff = 0.1, max_eff=1.0, min_rej=0, max_rej=100, logscale=True)
+		fig.savefig('/Users/gigifstark/CERN_Work/HH2YYBB/roc'+ str(k)+model_name+'.pdf')
+	cPickle.dump(pkl_dict, open(model_name+".pkl", 'wb'))
 
 def plot_confusion(yhat, data):
 	'''
