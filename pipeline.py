@@ -101,9 +101,6 @@ def main(json_config, model_name, tree_name):
 
     # # -- train
     # # design a Keras NN with three RNN streams (jets, photons, muons)
-    le=data['LabelEncoder']
-
-
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
@@ -117,7 +114,7 @@ def main(json_config, model_name, tree_name):
     #plot_NN(yhat, data)
 
     # # produce ROC curves to evaluate performance
-    save_roc_curves(yhat, data, le, model_name)
+    save_roc_curves(yhat, data, model_name)
     # # save them out to pdf
     # plot_performance(yhat, data['y_test'], data['w_test'])
 
