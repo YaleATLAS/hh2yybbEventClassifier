@@ -107,7 +107,6 @@ def main(json_config, mode, tree_name):
     # # evaluate performance on the test set
     yhat = test(net, data)
     
-    print yhat
     # # -- plot performance by mode
     if mode == 'regression':
         plot_regression(yhat, data)

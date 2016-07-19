@@ -5,6 +5,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import os
 
 def train(data, mode):
 	'''
@@ -57,6 +58,12 @@ def train(data, mode):
 		combined_rnn.add(Dense(1))
 		combined_rnn.compile('adam', 'mae')
 
+	try:
+		weights_path = os.path.join('weights', 'combinedrnn-progress.h5')
+		combined_rnn.load_weights(weights_path)
+	except IOError:
+		print 'Pre-trained weights not found'
+
 	print 'Training:'
 	try:
 		combined_rnn.fit([X_jet_train, X_photon_train], 
@@ -66,13 +73,16 @@ def train(data, mode):
      		},
         	callbacks = [
             	EarlyStopping(verbose=True, patience=10, monitor='val_loss'),
-          		ModelCheckpoint('./models/combinedrnn-progress',
+          		ModelCheckpoint(weights_path,
           		monitor='val_loss', verbose=True, save_best_only=True)
         	],
     	nb_epoch=30, validation_split = 0.2) 
 
 	except KeyboardInterrupt:
 		print 'Training ended early.'
+
+	# -- load best weights back into the net
+	combined_rnn.load_weights(weights_path)
 
 	return combined_rnn
 

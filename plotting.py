@@ -158,7 +158,7 @@ def plot_confusion(yhat, data):
 	# in each class)
 	cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 	_plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
-	plt.savefig('confusion2.pdf')
+	plt.savefig('confusion.pdf')
 
 
 def plot_regression(yhat, data):
