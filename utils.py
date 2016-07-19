@@ -27,4 +27,9 @@ def load_config(config_file):
 			if k not in particle_info.keys():
 				raise KeyError('Particle configuration requires key: {}'.format(k))
 
+	for class_name in config['classes'].keys():
+		if not class_name.startswith('X'):
+			if class_name != 'bkg':
+				raise KeyError('Class name must start with X if it is not bkg')
+
 	return config
