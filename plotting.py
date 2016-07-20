@@ -52,13 +52,20 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particl
 		color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_train)))))
 
 		# -- loop through the classes
-		for k in range(len(np.unique(y_train))):
+		for k in np.unique(y_train):
 			c = next(color)
+
+			# -- in regression, le is None and we want to keep the original key
+			try:
+				transformed_k=le.inverse_transform(k)
+			except AttributeError:
+				transformed_k=k
+
 			_ = plt.hist(flat_train[y_train == k], 
 				bins=bins, 
 				histtype='step', 
 				normed=True, 
-				label='Train - ' + le.inverse_transform(k),
+				label='Train - ' + str(transformed_k),
 				weights=w_train[y_train == k],
 				color=c, 
 				linewidth=1)
@@ -66,7 +73,7 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particl
 				bins=bins, 
 				histtype='step', 
 				normed=True,
-				label='Test  - ' + le.inverse_transform(k),
+				label='Test  - ' + str(transformed_k),
 				weights=w_test[y_test == k], 
 				color=c,
 				linewidth=2, 
@@ -217,3 +224,50 @@ def plot_confusion(yhat, data):
 	cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 	_plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
 	plt.savefig('confusion.pdf')
+
+
+def plot_regression(yhat, data):
+	'''
+	Args:
+		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
+		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
+              data = {
+                "X_jet_train" : X_jet_train,
+                "X_jet_test" : X_jet_test,
+                "X_photon_train" : X_photon_train,
+                "X_photon_test" : X_photon_test,
+                "y_train" : y_train,
+                "y_test" : y_test,
+                "w_train" : w_train,
+                "w_test" : w_test
+              }
+	Saves:
+		'regression_test.pdf': a histogram plotting yhat containing the predicted masses
+	'''
+	
+	y_test = data['y_test'].values
+	w_test = data['w_test']
+
+	color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
+	matplotlib.rcParams.update({'font.size': 16})
+	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+
+	bins = np.linspace(
+		min(min(yhat), min(y_test)), 
+		max(max(yhat), max(y_test)), 
+		30)
+
+	for k in np.unique(y_test):
+		c = next(color)
+		_ = plt.hist(yhat[y_test == k], 
+			bins=bins, 
+			histtype='step', 
+			normed=True, 
+			label=str(k),
+			weights=w_test[y_test == k],
+			color=c, 
+			linewidth=1)
+
+	plt.ylabel('Weighted Events')
+	plt.legend(prop={'size': 10}, fancybox=True, framealpha=0.5)
+	plt.savefig('regression_test.pdf')

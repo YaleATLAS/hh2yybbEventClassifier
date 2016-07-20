@@ -17,7 +17,7 @@ def _pairwise(iterable):
     return izip(a, a)
 
 
-def read_in(class_files_dict, tree_name, particles):
+def read_in(class_files_dict, tree_name, particles, mode):
     '''
     takes in dict mapping class names to list of root files, loads them and slices them into ML format
     Args:
@@ -74,22 +74,33 @@ def read_in(class_files_dict, tree_name, particles):
         le: LabelEncoder to transform numerical y back to its string values
     '''
     
-    #convert files to pd data frames, assign key to y, concat all files
+    #convert files to pd data frames, assign key or mass to y, concat all files
+
     def _make_df(val, key):
         df = pup.root2panda(val, tree_name)
-        df['y'] = key
+        if mode == 'classification':
+            df['y'] = key
+        elif mode == 'regression':
+            try:
+                df['y'] = int(key[1:])
+            except ValueError:
+                df['y'] = 0
         return df
 
     all_events = pd.concat([_make_df(val, key) for key, val in class_files_dict.iteritems()], ignore_index=True)
-    
+
     X = OrderedDict()
     for particle_name, particle_info in particles.iteritems():
         logger.info('Building X_{}'.format(particle_name))
         X[particle_name] = all_events[particle_info["branches"]].values
 
-    #transform string labels to integer classes
-    le = LabelEncoder()
-    y = le.fit_transform(all_events['y'].values)
+    #transform string labels to integer classes for classification or set y for regression
+    if mode == 'classification':
+        le = LabelEncoder()
+        y = le.fit_transform(all_events['y'].values)
+    elif mode == 'regression':
+        le = None
+        y = all_events['y'].values
     
     w = all_events['yybb_weight'].values
     

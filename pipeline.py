@@ -1,14 +1,17 @@
 import json
 from data_processing import read_in, shuffle_split_scale, padding
+import numpy as np
 import pandautils as pup
 import cPickle
 from plotting import plot_inputs, plot_NN_class_placement_probability, save_roc_curves
 import utils
 import logging
-from nn_combined import NN_train
+from nn_all import train
 import deepdish.io as io
 #from plotting import plot_inputs, plot_performance
-
+from functional_nn import train, test
+from plotting import plot_inputs, plot_confusion, plot_regression#, plot_performance
+from nn_with_modes import train, test 
 
 def main(json_config, model_name, tree_name):
     '''
@@ -53,7 +56,7 @@ def main(json_config, model_name, tree_name):
         return m.hexdigest()[:5]
 
     #-- if the pickle exists, use it
-    pickle_name = 'processed_data_' + sha(config) + '.pkl'
+    pickle_name = 'processed_data_' + sha(config) + '_' + sha(mode) + '.pkl'
     try:
         logger.info('Attempting to read from {}'.format(pickle_name))
         data = cPickle.load(open(pickle_name, 'rb'))
@@ -63,7 +66,7 @@ def main(json_config, model_name, tree_name):
         logger.info('Pre-processed data not found in {}'.format(pickle_name))
         logger.info('Processing data')
         # -- transform ROOT files into standard ML format (ndarrays) 
-        X, y, w, le = read_in(class_files_dict, tree_name, particles_dict)
+        X, y, w, le = read_in(class_files_dict, tree_name, particles_dict, mode)
 
         # -- shuffle, split samples into train and test set, scale features
         data = shuffle_split_scale(X, y, w)  
@@ -105,11 +108,18 @@ def main(json_config, model_name, tree_name):
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
     net=NN_train(data, model_name)
+    print data['X_electron_test']
+    print data['X_muon_test']
    
-    # # -- test
-    # # evaluate performance on the test set
-    yhat=net.predict([data['X_jet_test'], data['X_photon_test']], verbose = True, batch_size = 512) 
+    #yhat=net.predict([data['X_jet_test'], data['X_photon_test'], data], verbose = True, batch_size = 512) 
   
+    # # -- plot performance by mode
+    if mode == 'regression':
+        plot_regression(yhat, data)
+    if mode == 'classification':
+        plot_confusion(yhat, data)
+
+>>>>>>> 292a0d3357b00850bae9b432db74fd75ca906248
     # # -- plot performance
     #plot_NN(yhat, data)
 
@@ -128,9 +138,23 @@ if __name__ == '__main__':
     # -- read in arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
+<<<<<<< HEAD
     parser.add_argument('model_name', help="name of the set from particular network")
+||||||| merged common ancestors
+=======
+    parser.add_argument('mode', help="classification or regression")
+>>>>>>> 292a0d3357b00850bae9b432db74fd75ca906248
     parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
     args = parser.parse_args()
 
+    if args.mode != 'classification' and args.mode != 'regression':
+        raise ValueError('Mode must be classification or regression')
+
     # -- pass arguments to main
+<<<<<<< HEAD
     sys.exit(main(args.config, args.model_name, args.tree))
+||||||| merged common ancestors
+    sys.exit(main(args.config, args.tree))
+=======
+    sys.exit(main(args.config, args.mode, args.tree))
+>>>>>>> 292a0d3357b00850bae9b432db74fd75ca906248
