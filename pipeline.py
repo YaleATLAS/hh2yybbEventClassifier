@@ -1,14 +1,14 @@
 import json
 from data_processing import read_in, shuffle_split_scale, padding
+import numpy as np
 import pandautils as pup
 import cPickle
-from plotting import plot_inputs
 import utils
 import logging
-#from plotting import plot_inputs, plot_performance
-from functional_nn import train, test
+from plotting import plot_inputs, plot_confusion, plot_regression#, plot_performance
+from nn_with_modes import train, test 
 
-def main(json_config, tree_name):
+def main(json_config, mode, tree_name):
     '''
     Args:
     -----
@@ -51,7 +51,7 @@ def main(json_config, tree_name):
         return m.hexdigest()[:5]
 
     #-- if the pickle exists, use it
-    pickle_name = 'processed_data_' + sha(config) + '.pkl'
+    pickle_name = 'processed_data_' + sha(config) + '_' + sha(mode) + '.pkl'
     try:
         logger.info('Attempting to read from {}'.format(pickle_name))
         data = cPickle.load(open(pickle_name, 'rb'))
@@ -61,7 +61,7 @@ def main(json_config, tree_name):
         logger.info('Pre-processed data not found in {}'.format(pickle_name))
         logger.info('Processing data')
         # -- transform ROOT files into standard ML format (ndarrays) 
-        X, y, w, le = read_in(class_files_dict, tree_name, particles_dict)
+        X, y, w, le = read_in(class_files_dict, tree_name, particles_dict, mode)
 
         # -- shuffle, split samples into train and test set, scale features
         data = shuffle_split_scale(X, y, w) 
@@ -101,11 +101,17 @@ def main(json_config, tree_name):
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    net = train(data)
+    net = train(data, mode)
 
     # # -- test
     # # evaluate performance on the test set
     yhat = test(net, data)
+    
+    # # -- plot performance by mode
+    if mode == 'regression':
+        plot_regression(yhat, data)
+    if mode == 'classification':
+        plot_confusion(yhat, data)
 
     # # -- plot performance
     # # produce ROC curves to evaluate performance
@@ -122,8 +128,12 @@ if __name__ == '__main__':
     # -- read in arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
+    parser.add_argument('mode', help="classification or regression")
     parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
     args = parser.parse_args()
 
+    if args.mode != 'classification' and args.mode != 'regression':
+        raise ValueError('Mode must be classification or regression')
+
     # -- pass arguments to main
-    sys.exit(main(args.config, args.tree))
+    sys.exit(main(args.config, args.mode, args.tree))
