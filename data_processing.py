@@ -74,10 +74,13 @@ def read_in(class_files_dict, tree_name, particles, mode):
         le: LabelEncoder to transform numerical y back to its string values
     '''
     
-    #convert files to pd data frames, assign key or mass to y, concat all files
+    branches = []
+    for particle_name, particle_info in particles.iteritems():
+        branches += particle_info["branches"]
 
-    def _make_df(val, key):
-        df = pup.root2panda(val, tree_name)
+    #convert files to pd data frames, assign key or mass to y, concat all files
+    def _make_df(val, key, branches):
+        df = pup.root2panda(val, tree_name, branches = branches + ['HGamEventInfoAuxDyn.yybb_weight'])
         if mode == 'classification':
             df['y'] = key
         elif mode == 'regression':
@@ -87,7 +90,7 @@ def read_in(class_files_dict, tree_name, particles, mode):
                 df['y'] = 0
         return df
 
-    all_events = pd.concat([_make_df(val, key) for key, val in class_files_dict.iteritems()], ignore_index=True)
+    all_events = pd.concat([_make_df(val, key, branches) for key, val in class_files_dict.iteritems()], ignore_index=True)
 
     X = OrderedDict()
     for particle_name, particle_info in particles.iteritems():
@@ -102,8 +105,9 @@ def read_in(class_files_dict, tree_name, particles, mode):
         le = None
         y = all_events['y'].values
     
-    w = all_events['yybb_weight'].values
-    
+    #w = all_events['HGamEventInfoAuxDyn.yybb_weight'].values
+    w = np.ones(len(y))
+
     return X, y, w, le
 
 

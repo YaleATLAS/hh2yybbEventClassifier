@@ -51,7 +51,7 @@ def main(json_config, mode, tree_name):
         return m.hexdigest()[:5]
 
     #-- if the pickle exists, use it
-    pickle_name = 'processed_data_' + sha(config) + '_' + sha(mode) + '.pkl'
+    pickle_name = 'processed_data_' + sha(config) + '_' + mode + '.pkl'
     try:
         logger.info('Attempting to read from {}'.format(pickle_name))
         data = cPickle.load(open(pickle_name, 'rb'))
@@ -112,11 +112,7 @@ def main(json_config, mode, tree_name):
         plot_regression(yhat, data)
     if mode == 'classification':
         plot_confusion(yhat, data)
-
-    # # -- plot performance
-    # # produce ROC curves to evaluate performance
-    # # save them out to pdf
-    # plot_performance(yhat, data['y_test'], data['w_test'])
+        # plot roc curve
 
 if __name__ == '__main__':
     
