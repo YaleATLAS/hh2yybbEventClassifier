@@ -18,9 +18,10 @@ def train(data):
 	y_train = data['y_train']
 
 	# -- class weight needed if we want equal class representation
-	#class_weight = {k : (1./len(np.unique(y_train))) / (float(len(y_train[y_train == k])) / float(len(y_train))) for k in np.unique(y_train)}
-	class_weight = {k : (float(len(y_train)) / float(len(np.unique(y_train)) * (len(y_train[y_train == k])))) for k in np.unique(y_train)}
-
+	class_weight = {
+		k : (float(len(y_train)) / float(len(np.unique(y_train)) * (len(y_train[y_train == k])))) 
+		for k in np.unique(y_train)
+	}
 
 	# -- placeholders for matrix shapes
 	JET_SHAPE = X_jets_train.shape[1:]

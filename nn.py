@@ -44,8 +44,6 @@ def train(data):
 	combined_rnn.add(Dropout(0.3))
 	combined_rnn.add(Dense(len(np.unique(y_train)), activation='softmax'))
 
-
-	
 	combined_rnn.compile('adam', 'sparse_categorical_crossentropy')
 
 	logger = logging.getLogger('Train')

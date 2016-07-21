@@ -38,7 +38,7 @@ def main(json_config, tree_name):
 
     # -- load in the JSON file
     logger.info('Loading information from ' + json_config)
-    config = utils.load_config(json_config)
+    config = utils.load_config(json_config) # check config has expected structure
     class_files_dict = config['classes']
     particles_dict = config['particles']
 
