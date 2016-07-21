@@ -3,32 +3,29 @@
     {
     	"X400" :
         [
-            "/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_X400tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.MGPy8_X400tohh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
         ],
     	"X350" :
         [
-            "/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_X350tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.MGPy8_X350tohh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
         ],
     	"X325" :
         [
-            "/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_X325tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.MGPy8_X325tohh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
         ],
-        "H300" :
+        "X300" :
         [
-            "/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_H300_Xtohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.MGPy8_H300_Xtohh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
         ],
         "X275" :
         [
-            "/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_X275tohh_yybb.root"
+            "/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.MGPy8_X275tohh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
         ],
         "bkg" :
         [
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_ybbj.root",
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_ybjj.root",
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_yjjj.root",
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_yybb.root",
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/N_Tuples/MGPy8_yybj.root"
-        ]
+        	"/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.Sherpa_gamgam_2DP20_100-160_3jets.MxAOD.p2666.h012.root",
+        	"/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.aMCnloHwpp_hh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
+         ]
     },
 
     "particles" : 
@@ -37,15 +34,14 @@
         {
             "branches" :
                 [
-                    "jet_pt",
-                    "jet_eta",
-                    "jet_phi",
-                    "jet_m",
-                    "jet_Jvt",
-                    "jet_MV2c10_FixedCutBEff_60",
-                    "jet_MV2c10_FixedCutBEff_70",
-                    "jet_MV2c10_FixedCutBEff_77",
-                    "jet_MV2c10_FixedCutBEff_85"
+                    "HGamAntiKt4EMTopoJetsAuxDyn.pt",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.eta",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.phi",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.m",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_60",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_70",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_77",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_85"
                 ], 
             "max_length" : 5
         },
@@ -54,12 +50,12 @@
         {
             "branches" :
                 [
-                    "photon_pt", 
-                    "photon_eta", 
-                    "photon_phi", 
-                    "photon_isTight", 
-                    "photon_ptcone20", 
-                    "photon_topoEtcone40"
+                    "HGamPhotonsAuxDyn.pt", 
+                    "HGamPhotonsAuxDyn.eta", 
+                    "HGamPhotonsAuxDyn.phi", 
+                    "HGamPhotonsAuxDyn.isTight", 
+                    "HGamPhotonsAuxDyn.ptcone20", 
+                    "HGamPhotonsAuxDyn.topoetcone40"
                 ],
             "max_length" : 3
         },
@@ -68,13 +64,40 @@
         {
             "branches" :
                 [
-                    "jet_n",
-                    "met",
-                    "met_phi",
-                    "met_sumet",
-                    "photon_n"
+                    "HGamEventInfoAuxDyn.N_j", 
+                    "HGamEventInfoAuxDyn.N_j_30", 
+                    "HGamEventInfoAuxDyn.N_j_50", 
+                    "HGamEventInfoAuxDyn.met_TST",
+                    "HGamEventInfoAuxDyn.sumet_TST",
+                    "HGamEventInfoAuxDyn.phi_TST"
                 ],
             "max_length" : 1
+        },
+
+        "muon": 
+        {
+            "branches" :
+                [
+                    "HGamMuonsAuxDyn.pt", 
+                    "HGamMuonsAuxDyn.eta", 
+                    "HGamMuonsAuxDyn.phi", 
+                    "HGamTruthMuonsAuxDyn.m"
+                ],
+            "max_length" : 3
+        },
+
+        "electron": 
+        {
+            "branches" :
+                [
+                    "HGamElectronsAuxDyn.pt", 
+                    "HGamElectronsAuxDyn.eta", 
+                    "HGamElectronsAuxDyn.phi", 
+                    "HGamElectronsAuxDyn.m"
+                ],
+            "max_length" : 3
         }
+
+
     }
 }
