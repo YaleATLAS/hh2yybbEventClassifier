@@ -5,21 +5,59 @@ from matplotlib.pyplot import cm
 import pandautils as pup
 import os
 from sklearn.preprocessing import LabelEncoder
+from viz import calculate_roc, ROC_plotter, add_curve
+import cPickle 
 from sklearn.metrics import confusion_matrix
 from viz import ROC_plotter, add_curve, calculate_roc
 import cPickle
+
+def plot_inputs(data, particles_dict):
+	'''
+	Args:
+		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
+			  data = {
+				"X_jet_train" : X_jet_train,
+				"X_jet_test" : X_jet_test,
+				"X_photon_train" : X_photon_train,
+				"X_photon_test" : X_photon_test,
+				"y_train" : y_train,
+				"y_test" : y_test,
+				"w_train" : w_train,
+				"w_test" : w_test
+			  }
+		#particle_names: list of strings, names of particle streams
+		particles_dict:
+	Returns:
+		Saves .pdf histograms plotting the training and test 
+		sets of each class for each feature 
+	'''
+	
+	for particle in particles_dict.keys():
+		_plot_X(
+			data['X_' + particle + '_train'], 
+			data['X_' + particle + '_test'], 
+			data['y_train'],
+			data['y_test'], 
+			data['w_train'], 
+			data['w_test'], 
+			data['LabelEncoder'],
+			particle,
+			particles_dict
+			)
+
+# --------------------------------------------------------------
 
 def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particles_dict):
 	'''
 	Args:
 		train: ndarray [n_ev_train, n_muon_feat] containing the events allocated for training
-        test: ndarray [n_ev_test, n_muon_feat] containing the events allocated for testing
-       	y_train: ndarray [n_ev_train, 1] containing the shuffled truth labels for training in numerical format
-        y_test: ndarray [n_ev_test, 1] containing the shuffled truth labels allocated for testing in numerical format
-        w_train: ndarray [n_ev_train, 1] containing the shuffled EventWeights allocated for training
-        w_test: ndarray [n_ev_test, 1] containing the shuffled EventWeights allocated for testing
-        varlist: list of names of branches like 'jet_px', 'photon_E', 'muon_Iso'
-        le: LabelEncoder to transform numerical y back to its string values
+		test: ndarray [n_ev_test, n_muon_feat] containing the events allocated for testing
+		y_train: ndarray [n_ev_train, 1] containing the shuffled truth labels for training in numerical format
+		y_test: ndarray [n_ev_test, 1] containing the shuffled truth labels allocated for testing in numerical format
+		w_train: ndarray [n_ev_train, 1] containing the shuffled EventWeights allocated for training
+		w_test: ndarray [n_ev_test, 1] containing the shuffled EventWeights allocated for testing
+		varlist: list of names of branches like 'jet_px', 'photon_E', 'muon_Iso'
+		le: LabelEncoder to transform numerical y back to its string values
 		particle: a string like 'jet', 'muon', 'photon', ...
 		particles_dict:
 	Returns:
@@ -38,6 +76,7 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particl
 	
 	# -- loop through the variables
 	for column_counter, key in enumerate(varlist):
+		print key 
 		
 		flat_train = pup.flatten(train[:, column_counter])
 		flat_test = pup.flatten(test[:, column_counter])
@@ -89,105 +128,45 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particl
 			os.makedirs('plots')
 			plt.savefig(os.path.join('plots', key + '.pdf'))
 
-def plot_inputs(data, particles_dict):
-	'''
-	Args:
-		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
-              data = {
-                "X_jet_train" : X_jet_train,
-                "X_jet_test" : X_jet_test,
-                "X_photon_train" : X_photon_train,
-                "X_photon_test" : X_photon_test,
-                "y_train" : y_train,
-                "y_test" : y_test,
-                "w_train" : w_train,
-                "w_test" : w_test
-              }
-        #particle_names: list of strings, names of particle streams
-        particles_dict:
-	Returns:
-		Saves .pdf histograms plotting the training and test 
-		sets of each class for each feature 
-	'''
-	
-	for particle in particles_dict.keys():
-		_plot_X(
-			data['X_' + particle + '_train'], 
-			data['X_' + particle + '_test'], 
-			data['y_train'],
-			data['y_test'], 
-			data['w_train'], 
-			data['w_test'], 
-			data['LabelEncoder'],
-			particle,
-			particles_dict
-			)
+# --------------------------------------------------------------
 
-def plot_confusion(yhat, data):
+def plot_performance(yhat, data, model_name, mode):
+	if mode == 'regression':
+		plot_regression(yhat, data, model_name)
+	elif mode == 'classification':
+		plot_yhat(yhat, data, model_name)
+		plot_confusion(yhat, data, model_name)
+		plot_roc(yhat, data, model_name)
+	else:
+		raise ValueError('Mode must be classification or regression')
+
+# --------------------------------------------------------------
+
+def plot_regression(yhat, data, model_name):
 	'''
 	Args:
 		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
 		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
-              data = {
-                "X_jet_train" : X_jet_train,
-                "X_jet_test" : X_jet_test,
-                "X_photon_train" : X_photon_train,
-                "X_photon_test" : X_photon_test,
-                "y_train" : y_train,
-                "y_test" : y_test,
-                "w_train" : w_train,
-                "w_test" : w_test
-              }
-	Returns:
-		Saves confusion.pdf confusion matrix
-	'''
-	
-	y_test = data['y_test']
-	le = data['LabelEncoder']
-
-	def _plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
-	    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-	    plt.title(title)
-	    plt.colorbar()
-	    tick_marks = np.arange(len(np.unique(y_test)))
-	    plt.xticks(tick_marks, sorted(np.unique(y_test)))
-	    plt.yticks(tick_marks, sorted(np.unique(y_test)))
-	    plt.tight_layout()
-	    plt.ylabel('True label')
-	    plt.xlabel('Predicted label')
-
-	cm = confusion_matrix(y_test, np.argmax(yhat, axis=1))
-	# Normalize the confusion matrix by row (i.e by the number of samples
-	# in each class)
-	cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-	_plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
-	plt.savefig('confusion.pdf')
-
-
-def plot_regression(yhat, data):
-	'''
-	Args:
-		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
-		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
-              data = {
-                "X_jet_train" : X_jet_train,
-                "X_jet_test" : X_jet_test,
-                "X_photon_train" : X_photon_train,
-                "X_photon_test" : X_photon_test,
-                "y_train" : y_train,
-                "y_test" : y_test,
-                "w_train" : w_train,
-                "w_test" : w_test
-              }
+			  data = {
+				"X_jet_train" : X_jet_train,
+				"X_jet_test" : X_jet_test,
+				"X_photon_train" : X_photon_train,
+				"X_photon_test" : X_photon_test,
+				"y_train" : y_train,
+				"y_test" : y_test,
+				"w_train" : w_train,
+				"w_test" : w_test
+			  }
 	Saves:
 		'regression_test.pdf': a histogram plotting yhat containing the predicted masses
 	'''
 	
-	y_test = data['y_test'].values
+	y_test = data['y_test']
 	w_test = data['w_test']
 
 	color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
 	matplotlib.rcParams.update({'font.size': 16})
+	plt.clf()
 	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
 
 	bins = np.linspace(
@@ -208,21 +187,102 @@ def plot_regression(yhat, data):
 
 	plt.ylabel('Weighted Events')
 	plt.legend(prop={'size': 10}, fancybox=True, framealpha=0.5)
-	plt.savefig('regression.pdf')
+	fig.savefig('regression' + model_name + '.pdf')
 
+# --------------------------------------------------------------
 
-def save_roc_curves(yhat, data, model_name):
+def plot_yhat(yhat, data, model_name):
 	'''
 	Args:
-	    yhat: an ndarray of the probability of each event for each class
-	    data: dictionary containing X, y, w ndarrays
-	    model_name:
+		yhat: an ndarray of the probability of each event for each class
+		data: dictionary containing relevant data
+	 Returns:
+		a plot of the probability that each event in a known classes is predicted to be in a specific class
+	'''
+	y_test = data['y_test']
+	w_test = data['w_test']
+	matplotlib.rcParams.update({'font.size': 16})
+	bins = np.linspace(0, 1, 30)
+	plt.clf()
+
+	#find probability of each class 
+	for k in np.unique(y_test):
+		fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+		color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
+		#find the truth label for each class
+		for j in np.unique(y_test):
+			c = next(color)
+			_ = plt.hist(
+				yhat[:, k][y_test == j], 
+				bins=bins, 
+				histtype='step', 
+				normed=True, 
+				label=data['LabelEncoder'].inverse_transform(j),
+				weights=w_test[y_test == j],
+				color=c, 
+				linewidth=1
+			)
+		plt.xlabel('P(y == {})'.format(data['LabelEncoder'].inverse_transform(k)))
+		plt.ylabel('Weighted Normalized Number of Events')
+		plt.legend()
+		fig.savefig('p(y=={})_'.format(data['LabelEncoder'].inverse_transform(k)) + model_name + '.pdf')
+
+# --------------------------------------------------------------
+
+def plot_confusion(yhat, data, model_name):
+	'''
+	Args:
+		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
+		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
+			  data = {
+				"X_jet_train" : X_jet_train,
+				"X_jet_test" : X_jet_test,
+				"X_photon_train" : X_photon_train,
+				"X_photon_test" : X_photon_test,
+				"y_train" : y_train,
+				"y_test" : y_test,
+				"w_train" : w_train,
+				"w_test" : w_test
+			  }
+	Returns:
+		Saves confusion.pdf confusion matrix
+	'''
+	
+	y_test = data['y_test']
+	le = data['LabelEncoder']
+	plt.clf()
+
+	def _plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
+		plt.imshow(cm, interpolation='nearest', cmap=cmap)
+		plt.title(title)
+		plt.colorbar()
+		tick_marks = np.arange(len(np.unique(y_test)))
+		plt.xticks(tick_marks, sorted(np.unique(y_test)))
+		plt.yticks(tick_marks, sorted(np.unique(y_test)))
+		plt.tight_layout()
+		plt.ylabel('True label')
+		plt.xlabel('Predicted label')
+
+	cm = confusion_matrix(y_test, np.argmax(yhat, axis=1))
+	# Normalize the confusion matrix by row (i.e by the number of samples
+	# in each class)
+	cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+	_plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
+	plt.savefig('confusion' + model_name + '.pdf')
+
+# --------------------------------------------------------------
+
+def plot_roc(yhat, data, model_name):
+	'''
+	Args:
+		yhat: an ndarray of the probability of each event for each class
+		data: dictionary containing X, y, w ndarrays
+		model_name:
 	Returns:
 		plot: 
 		pickle file: pkl file dictionary with each curve
 	'''
-
-
+	# -- hardcoded in from cutflow!! extract them instead
 	cutflow_eff = [0.0699191919192, 0.0754639175258, 0.08439, 0.0921212121212, 0.110275510204, 0.00484432269559]
 
 	y_test = data['y_test']
@@ -249,11 +309,8 @@ def save_roc_curves(yhat, data, model_name):
 			title=k_string + r' vs. Sherpa $\gamma \gamma$ Background', 
 			min_eff=0.05, max_eff=1.0, ymax=500, 
 			logscale=False)
-		plt.scatter(cutflow_eff[k], 1. / cutflow_eff[bkg_col], label='Cutflow -' + k_string)
+		plt.scatter(cutflow_eff[k], 1. / cutflow_eff[bkg_col], label='Cutflow ' + k_string)
 		plt.legend()
 		matplotlib.rcParams.update({'font.size': 16})
 		fig.savefig('roc_' + k_string + '_' + model_name +'.pdf')
 	cPickle.dump(pkl_dict, open(model_name + '.pkl', 'wb'))
-
-
-

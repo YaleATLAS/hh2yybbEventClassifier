@@ -7,9 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 
-MODEL_NAME = 'jennymodes_nobtag'
-
-def train(data, mode):
+def train(data, model_name, mode):
 	'''
 	Args:
 		data: an OrderedDict containing all X, y, w ndarrays for all particles (both train and test), e.g.:
@@ -23,6 +21,7 @@ def train(data, mode):
                 "w_train" : w_train,
                 "w_test" : w_test
               }
+        model_name: string, nn identifier
         mode: a string specifying the type of task, either 'regression' or 'classification'
     Returns:
     	combine_rnn: a Sequential trained on data
@@ -81,7 +80,7 @@ def train(data, mode):
 	combined_rnn.summary()
 
 	try:
-		weights_path = os.path.join('weights', MODEL_NAME + '-progress.h5')
+		weights_path = os.path.join('weights', model_name + '-progress.h5')
 		combined_rnn.load_weights(weights_path)
 	except IOError:
 		print 'Pre-trained weights not found'
@@ -106,9 +105,9 @@ def train(data, mode):
 	# -- load best weights back into the net
 	combined_rnn.load_weights(weights_path)
 
-	return combined_rnn, MODEL_NAME
+	return combined_rnn
 
-def test(net, data):
+def test(net, data, model_name):
 	'''
 	Args:
 		net: a Sequential instance trained on data
@@ -153,9 +152,8 @@ def test(net, data):
 	X_photon_test = data['X_photon_test']
 	X_muon_test = data['X_muon_test']
 	X_event_test = data['X_event_test']
-	y_test= data ['y_test']
 
 	yhat = net.predict([X_jet_test, X_photon_test, X_muon_test, X_event_test], verbose=True, batch_size=1024) 
-	np.save('yhat_' + MODEL_NAME + '.npy', yhat)
+	np.save('yhat_' + model_name + '.npy', yhat)
 
 	return yhat
