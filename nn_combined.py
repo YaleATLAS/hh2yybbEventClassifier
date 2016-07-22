@@ -78,7 +78,7 @@ def NN_train(data, model_name, mode):
         combined_rnn.compile('adam', 'mae')
 
     try:
-        weights_path = os.path.join('weights', 'combinedrnn-progress'+model_name+'.h5')
+        weights_path = os.path.join('weights', 'combinedrnn-progress'+model_name+mode+'.h5')
         combined_rnn.load_weights(weights_path)
         print "Loaded Pre-trained Weights"
     except IOError:
