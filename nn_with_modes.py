@@ -1,11 +1,13 @@
 from keras.models import Sequential
 from keras.layers.core import Activation, Dense, Dropout
-from keras.layers import Masking, GRU, Merge, Input, merge
+from keras.layers import Masking, GRU, Merge, Input, merge, Lambda
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import os
+
+MODEL_NAME = 'jennymodes_nobtag'
 
 def train(data, mode):
 	'''
@@ -26,15 +28,23 @@ def train(data, mode):
     	combine_rnn: a Sequential trained on data
     '''
 
+	# -- extract training matrices from `data`
 	X_jet_train = data['X_jet_train']
 	X_photon_train = data['X_photon_train']
+	X_muon_train = data['X_muon_train']
+	X_event_train = data['X_event_train']
 	y_train = data['y_train']
 
+	# -- build net
 	jet_channel = Sequential()
 	photon_channel = Sequential()
+	muon_channel = Sequential()
+	event_level = Sequential()
 
 	JET_SHAPE = X_jet_train.shape[1:]
 	PHOTON_SHAPE = X_photon_train.shape[1:]
+	MUON_SHAPE = X_muon_train.shape[1:]
+	EVENT_SHAPE = X_event_train.shape[1]
 
 	jet_channel.add(Masking(mask_value=-999, input_shape=JET_SHAPE, name='jet_masking'))
 	jet_channel.add(GRU(25, name='jet_gru'))
@@ -44,39 +54,51 @@ def train(data, mode):
 	photon_channel.add(GRU(10, name='photon_gru'))
 	photon_channel.add(Dropout(0.3, name='photon_dropout'))
 
+	muon_channel.add(Masking(mask_value=-999, input_shape=MUON_SHAPE, name='muon_masking'))
+	muon_channel.add(GRU(10, name='muon_gru'))
+	muon_channel.add(Dropout(0.3, name='muon_dropout'))
+
+	event_level.add(Lambda(lambda x: x, input_shape=(EVENT_SHAPE, )))
+
 	combined_rnn = Sequential()
-	combined_rnn.add(Merge([jet_channel, photon_channel], mode='concat'))
-	combined_rnn.add(Dense(24, activation='relu'))
-	combined_rnn.add(Dropout(0.3))
-	combined_rnn.add(Dense(12, activation='relu'))
-	combined_rnn.add(Dropout(0.3))
+	combined_rnn.add(Merge([jet_channel, photon_channel, muon_channel, event_level], mode='concat'))	
+	combined_rnn.add(Dense(16, activation='relu'))
+	# combined_rnn.add(Dropout(0.3))
+	# combined_rnn.add(Dense(32, activation='relu'))
+	# combined_rnn.add(Dropout(0.3))
+	# combined_rnn.add(Dense(16, activation='relu'))
+	# combined_rnn.add(Dropout(0.3))
+	#combined_rnn.add(Dense(8, activation='relu'))
+
 	if mode == 'classification':
-		combined_rnn.add(Dense(6, activation='softmax'))
+		combined_rnn.add(Dense(len(np.unique(y_train)), activation='softmax'))
 		combined_rnn.compile('adam', 'sparse_categorical_crossentropy')
 
 	elif mode == 'regression':
 		combined_rnn.add(Dense(1))
 		combined_rnn.compile('adam', 'mae')
 
+	combined_rnn.summary()
+
 	try:
-		weights_path = os.path.join('weights', 'combinedrnn-progress.h5')
+		weights_path = os.path.join('weights', MODEL_NAME + '-progress.h5')
 		combined_rnn.load_weights(weights_path)
 	except IOError:
 		print 'Pre-trained weights not found'
 
 	print 'Training:'
 	try:
-		combined_rnn.fit([X_jet_train, X_photon_train], 
-    		y_train, batch_size=16, class_weight={
+		combined_rnn.fit([X_jet_train, X_photon_train, X_muon_train, X_event_train], 
+    		y_train, batch_size=256, class_weight={
                 k : (float(len(y_train)) / float(len(np.unique(y_train)) * 
                 	(len(y_train[y_train == k])))) for k in np.unique(y_train)
      		},
         	callbacks = [
-            	EarlyStopping(verbose=True, patience=10, monitor='val_loss'),
+            	EarlyStopping(verbose=True, patience=20, monitor='val_loss'),
           		ModelCheckpoint(weights_path,
           		monitor='val_loss', verbose=True, save_best_only=True)
         	],
-    	nb_epoch=30, validation_split = 0.2) 
+    	nb_epoch=200, validation_split = 0.2) 
 
 	except KeyboardInterrupt:
 		print 'Training ended early.'
@@ -84,7 +106,7 @@ def train(data, mode):
 	# -- load best weights back into the net
 	combined_rnn.load_weights(weights_path)
 
-	return combined_rnn
+	return combined_rnn, MODEL_NAME
 
 def test(net, data):
 	'''
@@ -129,8 +151,11 @@ def test(net, data):
 	'''
 	X_jet_test = data['X_jet_test']
 	X_photon_test = data['X_photon_test']
+	X_muon_test = data['X_muon_test']
+	X_event_test = data['X_event_test']
 	y_test= data ['y_test']
 
-	yhat_rnn = net.predict([X_jet_test, X_photon_test], verbose = True, batch_size = 512) 
+	yhat = net.predict([X_jet_test, X_photon_test, X_muon_test, X_event_test], verbose=True, batch_size=1024) 
+	np.save('yhat_' + MODEL_NAME + '.npy', yhat)
 
-	return yhat_rnn
+	return yhat

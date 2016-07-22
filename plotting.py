@@ -6,6 +6,8 @@ import pandautils as pup
 import os
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import confusion_matrix
+from viz import ROC_plotter, add_curve, calculate_roc
+import cPickle
 
 def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particles_dict):
 	'''
@@ -141,6 +143,7 @@ def plot_confusion(yhat, data):
 	'''
 	
 	y_test = data['y_test']
+	le = data['LabelEncoder']
 
 	def _plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
 	    plt.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -205,4 +208,52 @@ def plot_regression(yhat, data):
 
 	plt.ylabel('Weighted Events')
 	plt.legend(prop={'size': 10}, fancybox=True, framealpha=0.5)
-	plt.savefig('regression_test.pdf')
+	plt.savefig('regression.pdf')
+
+
+def save_roc_curves(yhat, data, model_name):
+	'''
+	Args:
+	    yhat: an ndarray of the probability of each event for each class
+	    data: dictionary containing X, y, w ndarrays
+	    model_name:
+	Returns:
+		plot: 
+		pickle file: pkl file dictionary with each curve
+	'''
+
+
+	cutflow_eff = [0.0699191919192, 0.0754639175258, 0.08439, 0.0921212121212, 0.110275510204, 0.00484432269559]
+
+	y_test = data['y_test']
+	w_test = data['w_test']
+	le = data['LabelEncoder']
+	bkg_col = np.argwhere(le.classes_ == 'bkg')[0][0]
+
+	pkl_dict = {}
+	for k in np.unique(y_test)[np.unique(y_test) != bkg_col]:
+		k_string = le.inverse_transform(k)
+		selection = (y_test == k) | (y_test == bkg_col)
+		finite = np.isfinite(np.log(yhat[selection][:, k] / yhat[selection][:, bkg_col]))
+		curves = {}
+		add_curve('DNN', 'black', 
+			calculate_roc(
+				y_test[selection][finite] == k, 
+				np.log(yhat[selection][finite][:, k] / yhat[selection][finite][:, bkg_col]), 
+				weights=w_test[selection][finite]
+				),
+			curves
+			)
+		pkl_dict.update(curves)
+		fig = ROC_plotter(curves, 
+			title=k_string + r' vs. Sherpa $\gamma \gamma$ Background', 
+			min_eff=0.05, max_eff=1.0, ymax=500, 
+			logscale=False)
+		plt.scatter(cutflow_eff[k], 1. / cutflow_eff[bkg_col], label='Cutflow -' + k_string)
+		plt.legend()
+		matplotlib.rcParams.update({'font.size': 16})
+		fig.savefig('roc_' + k_string + '_' + model_name +'.pdf')
+	cPickle.dump(pkl_dict, open(model_name + '.pkl', 'wb'))
+
+
+

@@ -5,7 +5,7 @@ import pandautils as pup
 import cPickle
 import utils
 import logging
-from plotting import plot_inputs, plot_confusion, plot_regression#, plot_performance
+from plotting import plot_inputs, plot_confusion, plot_regression, save_roc_curves
 from nn_with_modes import train, test 
 
 def main(json_config, mode, tree_name):
@@ -101,7 +101,7 @@ def main(json_config, mode, tree_name):
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    net = train(data, mode)
+    net, model_name = train(data, mode)
 
     # # -- test
     # # evaluate performance on the test set
@@ -112,7 +112,7 @@ def main(json_config, mode, tree_name):
         plot_regression(yhat, data)
     if mode == 'classification':
         plot_confusion(yhat, data)
-        # plot roc curve
+        save_roc_curves(yhat, data, model_name)
 
 if __name__ == '__main__':
     
