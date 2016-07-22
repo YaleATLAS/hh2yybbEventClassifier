@@ -1,14 +1,16 @@
 import json
-from data_processing import read_in, shuffle_split_scale, padding
 import numpy as np
 import pandautils as pup
 import cPickle
-import utils
 import logging
-from plotting import plot_inputs, plot_confusion, plot_regression, save_roc_curves
-from nn_with_modes import train, test 
+import deepdish.io as io
 
-def main(json_config, mode, tree_name):
+from data_processing import read_in, shuffle_split_scale, padding
+from plotting import plot_performance
+from nets import nn_with_modes
+import utils
+
+def main(json_config, tree_name, model_name, mode):
     '''
     Args:
     -----
@@ -55,7 +57,7 @@ def main(json_config, mode, tree_name):
     try:
         logger.info('Attempting to read from {}'.format(pickle_name))
         data = cPickle.load(open(pickle_name, 'rb'))
-        logger.info('Pre-processed data found and loaded from pickle')
+        logger.info('Pre-processed data found and loaded from pickle') 
     # -- otherwise, process the new data 
     except IOError:
         logger.info('Pre-processed data not found in {}'.format(pickle_name))
@@ -64,8 +66,8 @@ def main(json_config, mode, tree_name):
         X, y, w, le = read_in(class_files_dict, tree_name, particles_dict, mode)
 
         # -- shuffle, split samples into train and test set, scale features
-        data = shuffle_split_scale(X, y, w) 
-  
+        data = shuffle_split_scale(X, y, w)  
+
         data.update({
             'varlist' : [
                 branch 
@@ -74,7 +76,6 @@ def main(json_config, mode, tree_name):
             ],
             'LabelEncoder' : le
         })
-
         # -- plot distributions:
         '''
         This should produce normed, weighted histograms of the input distributions for all variables
@@ -96,23 +97,20 @@ def main(json_config, mode, tree_name):
             open(pickle_name, 'wb'),
             protocol=cPickle.HIGHEST_PROTOCOL)
 
-    # # -- train
-    # # design a Keras NN with three RNN streams (jets, photons, muons)
-    # # combine the outputs and process them through a bunch of FF layers
-    # # use a validation split of 20%
-    # # save out the weights to hdf5 and the model to yaml
-    net, model_name = train(data, mode)
+    # -- plot distributions:
 
-    # # -- test
-    # # evaluate performance on the test set
-    yhat = test(net, data)
+    # -- train
+    # design a Keras NN with three RNN streams (jets, photons, muons)
+    # combine the outputs and process them through a bunch of FF layers
+    # use a validation split of 20%
+    # save out the weights to hdf5 and the model to json
+    net = nn_with_modes.train(data, model_name, mode)
+    yhat = nn_with_modes.test(net, data, model_name)
     
-    # # -- plot performance by mode
-    if mode == 'regression':
-        plot_regression(yhat, data)
-    if mode == 'classification':
-        plot_confusion(yhat, data)
-        save_roc_curves(yhat, data, model_name)
+    # -- plot performance by mode
+    plot_performance(yhat, data, model_name, mode)
+
+# --------------------------------------------------------------
 
 if __name__ == '__main__':
     
@@ -124,12 +122,13 @@ if __name__ == '__main__':
     # -- read in arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
+    parser.add_argument('model_name', help="name of the set from particular network")
     parser.add_argument('mode', help="classification or regression")
-    parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
+    parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='CollectionTree')
     args = parser.parse_args()
 
     if args.mode != 'classification' and args.mode != 'regression':
         raise ValueError('Mode must be classification or regression')
 
     # -- pass arguments to main
-    sys.exit(main(args.config, args.mode, args.tree))
+    sys.exit(main(args.config, args.tree, args.model_name, args.mode))

@@ -8,6 +8,7 @@ import warnings
 import logging
 from collections import OrderedDict
 from itertools import izip
+import tqdm
 
 logger = logging.getLogger('data_processing')
 
@@ -84,10 +85,10 @@ def read_in(class_files_dict, tree_name, particles, mode):
         if mode == 'classification':
             df['y'] = key
         elif mode == 'regression':
-            try:
-                df['y'] = int(key[1:])
-            except ValueError:
+            if key == 'bkg':
                 df['y'] = 0
+            else:
+                df['y'] = int(key[1:])
         return df
 
     all_events = pd.concat([_make_df(val, key, branches) for key, val in class_files_dict.iteritems()], ignore_index=True)
@@ -107,7 +108,7 @@ def read_in(class_files_dict, tree_name, particles, mode):
     
     #w = all_events['HGamEventInfoAuxDyn.yybb_weight'].values
     w = np.ones(len(y))
-
+    
     return X, y, w, le
 
 
@@ -168,6 +169,7 @@ def shuffle_split_scale(X, y, w):
 
     data = OrderedDict()
     for particle, (train, test) in zip(X.keys(), _pairwise(data_tuple[:(2 * len(X))])):
+        print particle 
         data['X_' + particle + '_train'], data['X_' + particle+ '_test'] = _scale(train, test)
 
     data['y_train'], data['y_test'], data['w_train'], data['w_test'] = data_tuple[-4:]
