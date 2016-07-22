@@ -38,6 +38,7 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particl
 	
 	# -- loop through the variables
 	for column_counter, key in enumerate(varlist):
+		print key 
 		
 		flat_train = pup.flatten(train[:, column_counter])
 		flat_test = pup.flatten(test[:, column_counter])
@@ -123,7 +124,7 @@ def plot_inputs(data, particles_dict):
 			particles_dict
 			)
 
-def plot_NN_class_placement_probability(yhat, data):
+def plot_NN_class_placement_probability(yhat, data, model_name):
 	'''
     Args:
         yhat: an ndarray of the probability of each event for each class
@@ -134,11 +135,10 @@ def plot_NN_class_placement_probability(yhat, data):
 	y_test=data['y_test']
 	w_test=data['w_test']
 	matplotlib.rcParams.update({'font.size': 16})
-	fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
 	bins = np.linspace(0,1,30)
 	#find probability of each class 
 	for k in range(len(np.unique(y_test))):
-		print k
+		fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
 		color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
 		#find the truth label for each class
 		for j in range (len(np.unique(y_test))):
@@ -147,14 +147,14 @@ def plot_NN_class_placement_probability(yhat, data):
 			bins=bins, 
 			histtype='step', 
 			normed=True, 
-			label='Y=' + str(j),
+			label=data['LabelEncoder'].inverse_transform(j),
 			weights=w_test[y_test == j],
 			color=c, 
 			linewidth=1)
-		plt.xlabel('Probabilty of Y=' +str(k)) 
+		plt.xlabel('Probabilty Class is '+data['LabelEncoder'].inverse_transform(k))
 		plt.ylabel('Weighted Normalized Number of Events')
 		plt.legend()
-		plt.savefig('/Users/gigifstark/CERN_Work/HH2YYBB')
+		plt.savefig('/Users/gigifstark/CERN_Work/HH2YYBB/cpp'+str(k)+model_name+'.pdf')
 
 def save_roc_curves(yhat, data, model_name):
 	'''
@@ -182,11 +182,11 @@ def save_roc_curves(yhat, data, model_name):
 			)
 		pkl_dict.update(curves_dictionary)
 		print 'Plotting'+ " " + data['LabelEncoder'].inverse_transform(k)
-		fig=ROC_plotter(curves_dictionary, model_name, title=data['LabelEncoder'].inverse_transform(k), min_eff = 0.1, max_eff=1.0, min_rej=0, max_rej=100, logscale=True)
+		fig=ROC_plotter(curves_dictionary, model_name, title=data['LabelEncoder'].inverse_transform(k), min_eff = 0, max_eff=1.0, min_rej=0, max_rej=10000, logscale=True)
 		fig.savefig('/Users/gigifstark/CERN_Work/HH2YYBB/roc'+ str(k)+model_name+'.pdf')
 	cPickle.dump(pkl_dict, open(model_name+".pkl", 'wb'))
 
-def plot_confusion(yhat, data):
+def plot_confusion(yhat, data, model_name):
 	'''
 	Args:
 		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
@@ -223,10 +223,10 @@ def plot_confusion(yhat, data):
 	# in each class)
 	cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 	_plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
-	plt.savefig('confusion.pdf')
+	plt.savefig('confusion'+model_name+'.pdf')
 
 
-def plot_regression(yhat, data):
+def plot_regression(yhat, data, model_name):
 	'''
 	Args:
 		yhat: numpy array of dim [n_ev, n_classes] with the net predictions on the test data 
@@ -245,7 +245,7 @@ def plot_regression(yhat, data):
 		'regression_test.pdf': a histogram plotting yhat containing the predicted masses
 	'''
 	
-	y_test = data['y_test'].values
+	y_test = data['y_test']
 	w_test = data['w_test']
 
 	color = iter(cm.rainbow(np.linspace(0, 1, len(np.unique(y_test)))))
@@ -270,4 +270,4 @@ def plot_regression(yhat, data):
 
 	plt.ylabel('Weighted Events')
 	plt.legend(prop={'size': 10}, fancybox=True, framealpha=0.5)
-	plt.savefig('regression_test.pdf')
+	plt.savefig('regression'+model_name+'_test.pdf')

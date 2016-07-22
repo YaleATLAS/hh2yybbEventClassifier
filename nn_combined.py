@@ -1,14 +1,16 @@
 from keras.models import Sequential
 from keras.layers.core import Activation, Dense, Dropout
-from keras.layers import Masking, GRU, Merge, Input, merge
+from keras.layers import Masking, GRU, Merge, Input, merge, Lambda
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import datetime
 import time
+import logging
+import os
 
-def NN_train(data, model_name):
+def NN_train(data, model_name, mode):
     '''
     Args:
         data: dictionary containing relevant data
@@ -60,29 +62,38 @@ def NN_train(data, model_name):
 
     #combining the jet and photon classes to make a combined recurrent neural network
     combined_rnn = Sequential()
-    combined_rnn.add(Merge([jet_channel, photon_channel], mode='concat'))
-    combined_rnn.add(Dense(72, activation='relu'))
-    combined_rnn.add(Dropout(0.3))   
+    combined_rnn.add(Merge([jet_channel, photon_channel, event_level, muon_channel, electron_channel], mode='concat'))  
     combined_rnn.add(Dense(36, activation='relu'))
     combined_rnn.add(Dropout(0.3))
     combined_rnn.add(Dense(24, activation='relu'))
     combined_rnn.add(Dropout(0.3))
     combined_rnn.add(Dense(12, activation='relu'))
     combined_rnn.add(Dropout(0.3))
-    combined_rnn.add(Dense(6, activation='softmax'))
+    if mode == 'classification':
+        combined_rnn.add(Dense(6, activation='softmax'))
+        combined_rnn.compile('adam', 'sparse_categorical_crossentropy')
 
-    combined_rnn.compile('adam', 'sparse_categorical_crossentropy')
+    elif mode == 'regression':
+        combined_rnn.add(Dense(1))
+        combined_rnn.compile('adam', 'mae')
+
+    try:
+        weights_path = os.path.join('weights', 'combinedrnn-progress'+model_name+'.h5')
+        combined_rnn.load_weights(weights_path)
+        print "Loaded Pre-trained Weights"
+    except IOError:
+        print 'Pre-trained weights not found'
 
     logger = logging.getLogger('Train')
     logger.info('Compiling the net')
     try:
-        combined_rnn.fit([X_jets_train, X_photons_train], 
-            y_train, batch_size=100, class_weight={
+        combined_rnn.fit([X_jets_train, X_photons_train, X_event_train, X_muons_train, X_electrons_train], 
+            y_train, batch_size=16, class_weight={
                 k : (float(len(y_train)) / float(len(np.unique(y_train)) * (len(y_train[y_train == k])))) for k in np.unique(y_train)
             },
             callbacks = [
                 EarlyStopping(verbose=True, patience=20, monitor='val_loss'),
-                ModelCheckpoint('./models/combinedrnn-progress'+model_name,
+                ModelCheckpoint(weights_path, 
                 monitor='val_loss', verbose=True, save_best_only=True)
             ],
             nb_epoch=1, validation_split = 0.2) 
@@ -91,7 +102,7 @@ def NN_train(data, model_name):
         print 'Training ended early.'
 
     #saving the combined recurrent neural network
-    combined_rnn.save_weights('TestModel_'+model_name+'.H5')
+    combined_rnn.load_weights(weights_path)
     combined_rnn_json=combined_rnn.to_json()
     open('TestModel'+model_name+'.json','w').write(combined_rnn_json)
 

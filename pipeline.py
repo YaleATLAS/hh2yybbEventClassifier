@@ -10,10 +10,10 @@ from nn_all import train
 import deepdish.io as io
 #from plotting import plot_inputs, plot_performance
 from functional_nn import train, test
-from plotting import plot_inputs, plot_confusion, plot_regression#, plot_performance
-from nn_with_modes import train, test 
+from plotting import plot_inputs, plot_confusion, plot_regression, plot_NN_class_placement_probability 
+from nn_combined import NN_train 
 
-def main(json_config, model_name, tree_name):
+def main(json_config, model_name, mode, tree_name):
     '''
     Args:
     -----
@@ -107,24 +107,23 @@ def main(json_config, model_name, tree_name):
     # # combine the outputs and process them through a bunch of FF layers
     # # use a validation split of 20%
     # # save out the weights to hdf5 and the model to yaml
-    net=NN_train(data, model_name)
-    print data['X_electron_test']
-    print data['X_muon_test']
+    net=NN_train(data, model_name, mode)
    
-    #yhat=net.predict([data['X_jet_test'], data['X_photon_test'], data], verbose = True, batch_size = 512) 
-  
+    yhat=net.predict([data['X_jet_test'], data['X_photon_test'], data['X_event_test'], data['X_muon_test'], data['X_electron_test']], verbose = True, batch_size = 512) 
+    cPickle.dump(yhat, open('yhat'+model_name+".pkl", 'wb'))
+
     # # -- plot performance by mode
     if mode == 'regression':
-        plot_regression(yhat, data)
+        plot_regression(yhat, data, model_name)
     if mode == 'classification':
-        plot_confusion(yhat, data)
+        plot_confusion(yhat, data, model_name)
+        plot_NN_class_placement_probability(yhat, data, model_name)
+        save_roc_curves(yhat, data, model_name)
 
->>>>>>> 292a0d3357b00850bae9b432db74fd75ca906248
     # # -- plot performance
     #plot_NN(yhat, data)
 
     # # produce ROC curves to evaluate performance
-    save_roc_curves(yhat, data, model_name)
     # # save them out to pdf
     # plot_performance(yhat, data['y_test'], data['w_test'])
 
@@ -138,12 +137,8 @@ if __name__ == '__main__':
     # -- read in arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
-<<<<<<< HEAD
     parser.add_argument('model_name', help="name of the set from particular network")
-||||||| merged common ancestors
-=======
     parser.add_argument('mode', help="classification or regression")
->>>>>>> 292a0d3357b00850bae9b432db74fd75ca906248
     parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='mini')
     args = parser.parse_args()
 
@@ -151,10 +146,4 @@ if __name__ == '__main__':
         raise ValueError('Mode must be classification or regression')
 
     # -- pass arguments to main
-<<<<<<< HEAD
-    sys.exit(main(args.config, args.model_name, args.tree))
-||||||| merged common ancestors
-    sys.exit(main(args.config, args.tree))
-=======
-    sys.exit(main(args.config, args.mode, args.tree))
->>>>>>> 292a0d3357b00850bae9b432db74fd75ca906248
+    sys.exit(main(args.config, args.model_name, args.mode, args.tree))

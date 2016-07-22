@@ -1,6 +1,7 @@
 import logging
 import json
 
+
 def configure_logging():
     rlogger = logging.getLogger()
     rlogger.setLevel(logging.INFO)

@@ -23,8 +23,7 @@
         ],
         "bkg" :
         [
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.Sherpa_gamgam_2DP20_100-160_3jets.MxAOD.p2666.h012.root",
-        	"/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.aMCnloHwpp_hh_yybb.MxAOD-yybbDetailed.p2669.h012.root"
+        	"/Users/gigifstark/CERN_Work/HH2YYBB/new_data/mc15c.Sherpa_gamgam_2DP20_100-160_3jets.MxAOD.p2666.h012.root"
          ]
     },
 
@@ -80,8 +79,7 @@
                 [
                     "HGamMuonsAuxDyn.pt", 
                     "HGamMuonsAuxDyn.eta", 
-                    "HGamMuonsAuxDyn.phi", 
-                    "HGamTruthMuonsAuxDyn.m"
+                    "HGamMuonsAuxDyn.phi" 
                 ],
             "max_length" : 3
         },
@@ -92,8 +90,7 @@
                 [
                     "HGamElectronsAuxDyn.pt", 
                     "HGamElectronsAuxDyn.eta", 
-                    "HGamElectronsAuxDyn.phi", 
-                    "HGamElectronsAuxDyn.m"
+                    "HGamElectronsAuxDyn.phi"
                 ],
             "max_length" : 3
         }
