@@ -6,7 +6,7 @@ import logging
 import deepdish.io as io
 
 from data_processing import read_in, shuffle_split_scale, padding
-from plotting import plot_performance
+from plotting import plot_performance, plot_inputs
 from nets import nn_with_modes
 import utils
 
@@ -108,7 +108,7 @@ def main(json_config, tree_name, model_name, mode):
     yhat = nn_with_modes.test(net, data, model_name)
     
     # -- plot performance by mode
-    plot_performance(yhat, data, model_name, mode)
+    plot_performance(yhat, data, model_name, mode, class_files_dict)
 
 # --------------------------------------------------------------
 

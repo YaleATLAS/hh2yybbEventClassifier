@@ -28,15 +28,18 @@ def read_in(class_files_dict, tree_name, particles, mode):
 
                           {
                             "ttbar" :
-                            [
-                                "/path/to/file1.root",
-                                "/path/to/file2.root",
-                            ],
-                            "qcd" :
-                            [
-                                "/path/to/file3.root",
-                                "/path/to/file4*",
-                            ],
+                            { 
+                                "filenames":
+                                [
+                                    "/path/to/file1.root",
+                                    "/path/to/file2.root"
+                                ],
+                                "lumiXsecWeight" :
+                                [
+                                    0.1239,
+                                    1.2283
+                                ]
+                            }
                             ...
                           } 
         tree_name: string, name of the tree to open in the ntuples
@@ -80,18 +83,24 @@ def read_in(class_files_dict, tree_name, particles, mode):
         branches += particle_info["branches"]
 
     #convert files to pd data frames, assign key or mass to y, concat all files
-    def _make_df(val, key, branches):
-        df = pup.root2panda(val, tree_name, branches = branches + ['HGamEventInfoAuxDyn.yybb_weight'])
+    def _make_df(fname, key, branches, fweight):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df = pup.root2panda(fname, tree_name, branches = branches + ['HGamEventInfoAuxDyn.yybb_weight'])
+        df['lumiXsecWeight'] = fweight
         if mode == 'classification':
             df['y'] = key
         elif mode == 'regression':
             if key == 'bkg':
                 df['y'] = 0
-            else:
-                df['y'] = int(key[1:])
+        else:
+            df['y'] = int(key[1:])
         return df
 
-    all_events = pd.concat([_make_df(val, key, branches) for key, val in class_files_dict.iteritems()], ignore_index=True)
+    all_events = pd.concat([_make_df(fname, key, branches, fweight) 
+        for key, val in class_files_dict.iteritems() 
+            for fname, fweight in zip(val['filenames'], val['lumiXsecWeight'])], 
+        ignore_index=True)
 
     X = OrderedDict()
     for particle_name, particle_info in particles.iteritems():
@@ -107,7 +116,8 @@ def read_in(class_files_dict, tree_name, particles, mode):
         y = all_events['y'].values
     
     #w = all_events['HGamEventInfoAuxDyn.yybb_weight'].values
-    w = np.ones(len(y))
+    #w = np.ones(len(y))
+    w = all_events['lumiXsecWeight'].values
     
     return X, y, w, le
 
@@ -169,7 +179,6 @@ def shuffle_split_scale(X, y, w):
 
     data = OrderedDict()
     for particle, (train, test) in zip(X.keys(), _pairwise(data_tuple[:(2 * len(X))])):
-        print particle 
         data['X_' + particle + '_train'], data['X_' + particle+ '_test'] = _scale(train, test)
 
     data['y_train'], data['y_test'], data['w_train'], data['w_test'] = data_tuple[-4:]
