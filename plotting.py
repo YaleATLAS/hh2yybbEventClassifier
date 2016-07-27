@@ -328,11 +328,9 @@ def _get_efficiencies(class_files_dict):
     for cl in class_files_dict.keys():
         initial = final = 0
         for fname, lumiXsecWeight in zip(class_files_dict[cl]['filenames'], class_files_dict[cl]['lumiXsecWeight']):
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                df = pup.root2panda(fname, 'CollectionTree',
-                                  branches = ['HGamEventInfoAuxDyn.yybb_cutFlow', 'HGamEventInfoAuxDyn.isPassed'])
-                f = root_open(fname, 'read')
+            df = pup.root2panda(fname, 'CollectionTree',
+                              branches = ['HGamEventInfoAuxDyn.yybb_cutFlow', 'HGamEventInfoAuxDyn.isPassed'])
+            f = root_open(fname, 'read')
             hist = f.Get('CutFlow_' + fname.split('.')[1]) 
             initial += lumiXsecWeight * hist.GetBinContent(3)
             final += lumiXsecWeight * sum(

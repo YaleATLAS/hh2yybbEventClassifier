@@ -88,7 +88,11 @@
                     "HGamAntiKt4EMTopoJetsAuxDyn.pt",
                     "HGamAntiKt4EMTopoJetsAuxDyn.eta",
                     "HGamAntiKt4EMTopoJetsAuxDyn.phi",
-                    "HGamAntiKt4EMTopoJetsAuxDyn.m"
+                    "HGamAntiKt4EMTopoJetsAuxDyn.m",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_60",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_70",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_77",
+                    "HGamAntiKt4EMTopoJetsAuxDyn.MV2c10_FixedCutBEff_85"
                 ], 
             "max_length" : 5
         },
