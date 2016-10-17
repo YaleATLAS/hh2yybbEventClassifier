@@ -93,8 +93,8 @@ def read_in(class_files_dict, tree_name, particles, mode):
         elif mode == 'regression':
             if key == 'bkg':
                 df['y'] = 0
-        else:
-            df['y'] = int(key[1:])
+            else:
+                df['y'] = int(key[1:])
         return df
 
     all_events = pd.concat([_make_df(fname, key, branches, fweight) 
@@ -118,7 +118,6 @@ def read_in(class_files_dict, tree_name, particles, mode):
     #w = all_events['HGamEventInfoAuxDyn.yybb_weight'].values
     #w = np.ones(len(y))
     w = all_events['lumiXsecWeight'].values
-    
     return X, y, w, le
 
 

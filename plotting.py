@@ -187,7 +187,7 @@ def plot_regression(yhat, data, model_name):
 
     plt.ylabel('Weighted Events')
     plt.legend(prop={'size': 10}, fancybox=True, framealpha=0.5)
-    fig.savefig('regression' + model_name + '.pdf')
+    fig.savefig(os.path.join('output_plots', 'regression' + model_name + '.pdf'))
 
 # --------------------------------------------------------------
 
@@ -225,7 +225,11 @@ def plot_yhat(yhat, data, model_name):
         plt.xlabel('P(y == {})'.format(data['LabelEncoder'].inverse_transform(k)))
         plt.ylabel('Weighted Normalized Number of Events')
         plt.legend()
-        fig.savefig('p(y=={})_'.format(data['LabelEncoder'].inverse_transform(k)) + model_name + '.pdf')
+        fig.savefig(os.path.join(
+            'output_plots', 
+            'p(y=={})_'.format(data['LabelEncoder'].inverse_transform(k)) + model_name + '.pdf'
+            )
+        )
 
 # --------------------------------------------------------------
 
@@ -268,7 +272,7 @@ def plot_confusion(yhat, data, model_name):
     # in each class)
     cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
     _plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
-    plt.savefig('confusion' + model_name + '.pdf')
+    plt.savefig(os.path.join('output_plots', 'confusion' + model_name + '.pdf'))
 
 # --------------------------------------------------------------
 
@@ -285,20 +289,19 @@ def plot_roc(yhat, data, model_name, class_files_dict):
     # -- hardcoded in from cutflow!! extract them instead
     #cutflow_eff = [0.0699191919192, 0.0754639175258, 0.08439, 0.0921212121212, 0.110275510204, 0.00484432269559]
     cutflow_eff = _get_efficiencies(class_files_dict)
-    print cutflow_eff
+    pkl_dict = cutflow_eff
 
     y_test = data['y_test']
     w_test = data['w_test']
     le = data['LabelEncoder']
     bkg_col = np.argwhere(le.classes_ == 'bkg')[0][0]
 
-    pkl_dict = {}
     for k in np.unique(y_test)[np.unique(y_test) != bkg_col]:
         k_string = le.inverse_transform(k)
         selection = (y_test == k) | (y_test == bkg_col)
         finite = np.isfinite(np.log(yhat[selection][:, k] / yhat[selection][:, bkg_col]))
         curves = {}
-        add_curve('DNN', 'black', 
+        add_curve('DNN ' + k_string, 'black', 
             calculate_roc(
                 y_test[selection][finite] == k, 
                 np.log(yhat[selection][finite][:, k] / yhat[selection][finite][:, bkg_col]), 
@@ -311,10 +314,14 @@ def plot_roc(yhat, data, model_name, class_files_dict):
             title=k_string + r' vs. Background', 
             min_eff=0.0, max_eff=1.0, ymax=1e6, 
             logscale=True)
-        plt.scatter(cutflow_eff[le.inverse_transform(k)], 1. / cutflow_eff[le.inverse_transform(bkg_col)], label='Cutflow ' + k_string)
+        plt.scatter(
+            cutflow_eff[le.inverse_transform(k)], 
+            1. / cutflow_eff[le.inverse_transform(bkg_col)], 
+            label='Cutflow ' + k_string
+            )
         plt.legend()
         matplotlib.rcParams.update({'font.size': 16})
-        fig.savefig('roc_' + k_string + '_' + model_name +'.pdf')
+        fig.savefig(os.path.join('output_plots', 'roc_' + k_string + '_' + model_name +'.pdf'))
     cPickle.dump(pkl_dict, open(model_name + '.pkl', 'wb'))
 
 # --------------------------------------------------------------
@@ -329,12 +336,26 @@ def _get_efficiencies(class_files_dict):
         initial = final = 0
         for fname, lumiXsecWeight in zip(class_files_dict[cl]['filenames'], class_files_dict[cl]['lumiXsecWeight']):
             df = pup.root2panda(fname, 'CollectionTree',
-                              branches = ['HGamEventInfoAuxDyn.yybb_cutFlow', 'HGamEventInfoAuxDyn.isPassed'])
+                              branches = [
+                              'HGamEventInfoAuxDyn.yybb_cutFlow', 
+                              'HGamEventInfoAuxDyn.isPassed',
+                              'HGamEventInfoAuxDyn.weight',
+                              'HGamEventInfoAuxDyn.yybb_weight'
+                              ])
             f = root_open(fname, 'read')
-            hist = f.Get('CutFlow_' + fname.split('.')[1]) 
+            hist = f.Get('CutFlow_' + fname.split('.')[1] + '_weighted') 
             initial += lumiXsecWeight * hist.GetBinContent(3)
+            # final += lumiXsecWeight * sum(
+            #     (df['HGamEventInfoAuxDyn.yybb_cutFlow'][df['HGamEventInfoAuxDyn.isPassed'].values == 1].values == 4) * 
+
+            #     )
             final += lumiXsecWeight * sum(
-                (df['HGamEventInfoAuxDyn.yybb_cutFlow'][df['HGamEventInfoAuxDyn.isPassed'].values == 1] == 4).values
+                df['HGamEventInfoAuxDyn.weight'] * \
+                df['HGamEventInfoAuxDyn.yybb_weight'] * \
+                np.logical_and(
+                    df['HGamEventInfoAuxDyn.yybb_cutFlow'].values == 4, 
+                    df['HGamEventInfoAuxDyn.isPassed'].values == 1
+                    )
                 )
             #class_efficiency +=  final / (lumiXsecWeight * initial)
             #print '{}: {} / {} = {}'.format(fname.split('.')[1], final, initial, 100 * float(final) / float(initial))

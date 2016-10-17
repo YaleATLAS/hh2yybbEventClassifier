@@ -47,26 +47,30 @@ def train(data, model_name, mode):
     EVENT_SHAPE = X_event_train.shape[1]
 
     jet_channel.add(Masking(mask_value=-999, input_shape=JET_SHAPE, name='jet_masking'))
-    jet_channel.add(GRU(25, name='jet_gru'))
+    jet_channel.add(GRU(30, name='jet_gru', return_sequences=True))
+    jet_channel.add(GRU(50, name='jet_gru2'))
     jet_channel.add(Dropout(0.3, name='jet_dropout'))
 
     photon_channel.add(Masking(mask_value=-999, input_shape=PHOTON_SHAPE, name='photon_masking'))
-    photon_channel.add(GRU(10, name='photon_gru'))
+    photon_channel.add(GRU(30, name='photon_gru', return_sequences=True))
+    photon_channel.add(GRU(50, name='photon_gru2'))
     photon_channel.add(Dropout(0.3, name='photon_dropout'))
 
     muon_channel.add(Masking(mask_value=-999, input_shape=MUON_SHAPE, name='muon_masking'))
-    muon_channel.add(GRU(10, name='muon_gru'))
+    muon_channel.add(GRU(30, name='muon_gru', return_sequences=True))
+    muon_channel.add(GRU(50, name='muon_gru2'))
     muon_channel.add(Dropout(0.3, name='muon_dropout'))
 
     event_level.add(Lambda(lambda x: x, input_shape=(EVENT_SHAPE, )))
 
     combined_rnn = Sequential()
     combined_rnn.add(Merge([jet_channel, photon_channel, muon_channel, event_level], mode='concat'))    
-    combined_rnn.add(Dense(16, activation='relu'))
+    combined_rnn.add(Dense(32, activation='relu'))
+    combined_rnn.add(Dropout(0.2))
     # combined_rnn.add(Dropout(0.3))
     # combined_rnn.add(Dense(32, activation='relu'))
     # combined_rnn.add(Dropout(0.3))
-    # combined_rnn.add(Dense(16, activation='relu'))
+    combined_rnn.add(Dense(16, activation='relu'))
     # combined_rnn.add(Dropout(0.3))
     #combined_rnn.add(Dense(8, activation='relu'))
 
@@ -81,10 +85,11 @@ def train(data, model_name, mode):
     combined_rnn.summary()
 
     try:
-        weights_path = os.path.join('weights', model_name + '-progress.h5')
+        weights_path = os.path.join('weights', model_name + '_' + mode + '-progress.h5')
         combined_rnn.load_weights(weights_path)
+        print 'Pre-trained weights found and loaded from ' + weights_path
     except IOError:
-        print 'Pre-trained weights not found'
+        print 'Pre-trained weights not found in ' + weights_path
 
     print 'Training:'
     # class_weight = {
@@ -100,9 +105,9 @@ def train(data, model_name, mode):
         combined_rnn.fit([X_jet_train, X_photon_train, X_muon_train, X_event_train], 
             y_train, batch_size=256, 
             #class_weight=class_weight,
-            sample_weight=np.sqrt(w_train),
+            sample_weight=np.power(w_train, (0.5)),
             callbacks = [
-                EarlyStopping(verbose=True, patience=20, monitor='val_loss'),
+                EarlyStopping(verbose=True, patience=30, monitor='val_loss'),
                 ModelCheckpoint(weights_path,
                 monitor='val_loss', verbose=True, save_best_only=True)
             ],
