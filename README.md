@@ -50,7 +50,9 @@ optional arguments:
                CollectionTree
 ```
 #### Example:
-`python pipeline.py config.json abcxyz classification --tree CollectionTree`
+`python pipeline.py config_mxaod.json abcxyz classification --tree CollectionTree`<br/>
+
+Disclaimer: the `config_mxaod.json` file is provided only as an example and it should not be used directly as it contains hardcoded paths to my local files. However, this could be copied and modified for any specific user's use case.
 
 ## To-do list:
  1. Testing module to check performance and produce ROC curves. Plot ROC curve as a function of mu (pile-up), pt of largest jet, Njets, etc. 
