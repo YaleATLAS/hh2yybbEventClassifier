@@ -121,11 +121,11 @@ def _plot_X(train, test, y_train, y_test, w_train, w_test, le, particle, particl
         plt.ylabel('Weighted Events')
         plt.legend(prop={'size': 10}, fancybox=True, framealpha=0.5)
         try:
-            plt.savefig(os.path.join('plots', key + '.pdf'))
+            plt.savefig(os.path.join('input_plots', key + '.pdf'))
             plt.close(fig)
         except IOError:
             os.makedirs('plots')
-            plt.savefig(os.path.join('plots', key + '.pdf'))
+            plt.savefig(os.path.join('input_plots', key + '.pdf'))
             plt.close(fig)
 
 # --------------------------------------------------------------
@@ -282,6 +282,7 @@ def plot_roc(yhat, data, model_name, class_files_dict):
         yhat: an ndarray of the probability of each event for each class
         data: dictionary containing X, y, w ndarrays
         model_name:
+        class_files_dict:
     Returns:
         plot: 
         pickle file: pkl file dictionary with each curve
@@ -328,35 +329,66 @@ def plot_roc(yhat, data, model_name, class_files_dict):
 
 def _get_efficiencies(class_files_dict):
     '''
+    omg this is ugly --> rewrite!
+    we have a bunch of try, except blocks because the structure of an MxAOD is very
+    different from the structure of a mini ntuple
+    in addition, when using mini ntuples, the background is provided by data with 
+    !tight !isolated photons (so loose-not-tight and anti-isolated photons)
     '''
-    from rootpy.io import root_open
+    from rootpy.io import root_open, DoesNotExist
+    from rootpy import ROOTError
     
     efficiencies = {}
     for cl in class_files_dict.keys():
         initial = final = 0
         for fname, lumiXsecWeight in zip(class_files_dict[cl]['filenames'], class_files_dict[cl]['lumiXsecWeight']):
-            df = pup.root2panda(fname, 'CollectionTree',
-                              branches = [
-                              'HGamEventInfoAuxDyn.yybb_cutFlow', 
-                              'HGamEventInfoAuxDyn.isPassed',
-                              'HGamEventInfoAuxDyn.weight',
-                              'HGamEventInfoAuxDyn.yybb_weight'
-                              ])
+            try:
+                df = pup.root2panda(fname, 'CollectionTree',
+                                  branches = [
+                                  'HGamEventInfoAuxDyn.yybb_cutFlow', 
+                                  'HGamEventInfoAuxDyn.isPassed',
+                                  'HGamEventInfoAuxDyn.weight',
+                                  'HGamEventInfoAuxDyn.yybb_weight'
+                                  ])
+            except ROOTError:
+                df = pup.root2panda(fname, 'mini',
+                                  branches = [
+                                  'yybb_cutList', 
+                                  'hgam_isPassed',
+                                  'hgam_weight',
+                                  'yybb_weight'
+                                  ])
             f = root_open(fname, 'read')
-            hist = f.Get('CutFlow_' + fname.split('.')[1] + '_weighted') 
-            initial += lumiXsecWeight * hist.GetBinContent(3)
-            # final += lumiXsecWeight * sum(
-            #     (df['HGamEventInfoAuxDyn.yybb_cutFlow'][df['HGamEventInfoAuxDyn.isPassed'].values == 1].values == 4) * 
+            if 'data' in fname:
+                initial += df.shape[0]
+                final += 0 #sum(
+                    # WAITING FOR LIZA
+                    #)
+            else: 
+                try:
+                    hist = f.Get('CutFlow_' + fname.split('.')[1] + '_weighted') 
+                except DoesNotExist:
+                    hist = f.Get('cutflow_weighted')
+                initial += lumiXsecWeight * hist.GetBinContent(3)
 
-            #     )
-            final += lumiXsecWeight * sum(
-                df['HGamEventInfoAuxDyn.weight'] * \
-                df['HGamEventInfoAuxDyn.yybb_weight'] * \
-                np.logical_and(
-                    df['HGamEventInfoAuxDyn.yybb_cutFlow'].values == 4, 
-                    df['HGamEventInfoAuxDyn.isPassed'].values == 1
-                    )
-                )
+                try:
+                    final += lumiXsecWeight * sum(
+                        df['HGamEventInfoAuxDyn.weight'] * \
+                        df['HGamEventInfoAuxDyn.yybb_weight'] * \
+                        np.logical_and(
+                            df['HGamEventInfoAuxDyn.yybb_cutFlow'].values == 4, 
+                            df['HGamEventInfoAuxDyn.isPassed'].values == 1
+                            )
+                        )
+                except KeyError:
+                    final += lumiXsecWeight * sum(
+                        df['hgam_weight'] * \
+                        df['yybb_weight'] * \
+                        np.logical_and(
+                            df['yybb_cutList'].values == max(df['yybb_cutList'].values), 
+                            df['hgam_isPassed'].values == 1
+                            )
+                        )
             #class_efficiency +=  final / (lumiXsecWeight * initial)
             #print '{}: {} / {} = {}'.format(fname.split('.')[1], final, initial, 100 * float(final) / float(initial))
         efficiencies[cl] = final / initial

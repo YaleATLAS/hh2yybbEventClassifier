@@ -97,8 +97,6 @@ def main(json_config, tree_name, model_name, mode):
             open(pickle_name, 'wb'),
             protocol=cPickle.HIGHEST_PROTOCOL)
 
-    # -- plot distributions:
-
     # -- train
     # design a Keras NN with three RNN streams (jets, photons, muons)
     # combine the outputs and process them through a bunch of FF layers
@@ -121,10 +119,10 @@ if __name__ == '__main__':
 
     # -- read in arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', help="path to JSON file that specifies classes and corresponding ROOT files' paths")
-    parser.add_argument('model_name', help="name of the set from particular network")
-    parser.add_argument('mode', help="classification or regression")
-    parser.add_argument('--tree', help="name of the tree to open in the ntuples", default='CollectionTree')
+    parser.add_argument('config', help="Path to JSON file that specifies classes and corresponding ROOT files' paths")
+    parser.add_argument('model_name', help="Neural net identifier")
+    parser.add_argument('mode', help="Choose: classification or regression")
+    parser.add_argument('--tree', help="Name of the tree to open in the ntuples. Default: CollectionTree", default='CollectionTree')
     args = parser.parse_args()
 
     if args.mode != 'classification' and args.mode != 'regression':
